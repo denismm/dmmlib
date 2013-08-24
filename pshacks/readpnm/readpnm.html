@@ -1,0 +1,55 @@
+<html>
+<head>
+<title>Read PNM files from postscript code</title>
+</head>
+<body>
+<h1>Read PNM files from postscript code</h1>
+<ul>
+<li><a href="readpnm.ps">readpnm.ps library</a></li>
+<li><a href="readpnm.ps.txt">readpnm.ps named as a text file</a></li>
+</ul>
+<p>
+Until late 2007, 
+I had never needed to embed images into my postscript, so I considered it 
+"deep magic".  In 2007, I volunteered to automate creation of ID cards for 
+a club, so I needed to be able to render supplied images of the members.
+</p>
+<p>
+I discovered that postscript's image format is not dissimilar from the PPM and 
+PGM standards used by the widely available netpbm utilities.   They are
+in fact similar enough that you can read in ppm and pgm files directly from
+postscript code.  This is probably not useful when writing postscript
+to be run by a printer, but if (like me) you mostly render your postscript
+to pdf or image formats, it greatly simplifies adding images to your pages.
+</p>
+<p>
+This library provides the functions drawpnm_width, drawpnm_height, and 
+drawpnm_square.  All functions simply take a string argument giving the
+location of the image file.  The first two functions scale the image to 
+have a width of 1 unit or a height of 1 unit respectively, and put the
+lower left corner of the image at 0,0.  The third function trims the
+image down on the top and bottom or left and right to make it a square and
+paints that square in the 0,0 - 1,1 square.
+</p>
+<p>
+The library will deal with standard pgm (greyscale) and ppm (color) images
+with no change to the ps code.
+The third pnm format, pbm, differs slightly from postscript's 1-bit image 
+format.  Postscript images have every 8 pixels collated into a byte.  PBM
+images do the same, except that the end of each line is padded with zeroes
+until a byte boundary is reached.  There's probably some way around this,
+or even a way to handle the "plain" formats, but I didn't think they were
+worth figuring out - it's easy to convert pbm to pgm (by using the pbmtopgm
+command, for instance).
+</p>
+<p>
+I release this code to the public domain - do what you like with it.
+</p>
+<hr>
+<address>
+First written Sun Nov 11 2007 by 
+<a href="http://www.suberic.net/~dmm/">Denis Moskowitz</a>.
+Last modified Sat Aug 16 2008 by Denis.
+</address>
+</body>
+</html>

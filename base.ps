@@ -1,0 +1,396 @@
+%!
+
+/circle { 0 360 arc closepath } def
+
+/dot { currentlinewidth 1.5 mul circle fill } def
+
+/arg { exch def } def
+/recip { 1 exch div } def
+/maximum { 2 copy gt { pop } { exch pop } ifelse } def
+/minimum { 2 copy lt { pop } { exch pop } ifelse } def
+
+/randint {rand exch mod} def
+
+% curve analysis
+/lcurveto_dict 8 dict def
+/lcurveto {
+    lcurveto_dict begin
+        /y3 arg /x3 arg
+        /y2 arg /x2 arg
+        /y1 arg /x1 arg
+        x1 y1 lineto x2 y2 lineto x3 y3 lineto
+    end
+} def
+/pcurveto {
+    lcurveto_dict begin
+        /y3 arg /x3 arg
+        /y2 arg /x2 arg
+        /y1 arg /x1 arg
+        currentpoint /y0 arg /x0 arg
+        gsave
+            1 0 0 setrgbcolor
+            newpath
+            x0 y0 dot
+            x1 y1 dot
+            x2 y2 dot
+            x3 y3 dot
+        grestore
+        x1 y1 x2 y2 x3 y3 curveto
+    end
+} def
+
+
+% ellipse library
+/ellipsedict 20 dict def
+ellipsedict /mtrx matrix put
+ellipsedict begin
+    /ell_base {
+        /arc_command arg
+        /endangle arg /startangle arg
+        /yrad arg /xrad arg
+        /y arg /x arg
+        /savematrix mtrx currentmatrix def
+        x y translate
+        xrad yrad scale
+        0 0 1 startangle endangle arc_command cvx exec
+        savematrix setmatrix
+    } def
+end
+/ell { ellipsedict begin /arc ell_base end } def
+/elln { ellipsedict begin /arcn ell_base end } def
+/spell { ellipsedict begin /sparc ell_base end } def
+/spelln { ellipsedict begin /sparcn ell_base end } def
+
+% svg-style arc
+% svgarc: draw elliptical arc with SVG-style arguments
+% xrad yrad xrot large sweep nx ny
+% start point at currentpoint, end point at nx,ny
+% radii of ellipse is xrad, yrad
+% angle of ellipse x-axis is xrot
+% arc counterclockwise if sweep is 1, else clockwise
+% large arc if large is 1
+
+% rsvgarc: nx/ny is relative
+% svgsparc: use spline arcs, two if large
+% rsvgsparc: both of above
+
+ellipsedict begin
+    /svgarc_base {
+        /spline arg
+        /relative arg
+        /ny arg
+        /nx arg
+        /sweep arg
+        /large arg
+        /xrot arg
+        /yrad arg
+        /xrad arg
+
+        % save current ref frame
+        /originalmatrix matrix currentmatrix def
+
+        % spare matrix for transformations
+        /tempmatrix matrix def
+
+        /ntrans {
+            nx ny tempmatrix itransform /ny arg /nx arg
+            tempmatrix concat
+        } def
+
+        %move to origin
+        relative {
+            currentpoint translate
+        } {
+            currentpoint tempmatrix translate
+            ntrans
+        } ifelse
+
+        %rotate ellipse
+        xrot tempmatrix rotate
+        ntrans
+
+        % scale ellipse to circle
+        xrad yrad tempmatrix scale
+        /r 1 def
+        ntrans
+
+        % rotate nx/ny to 0/positive
+        nx neg ny atan tempmatrix rotate
+        ntrans
+
+        % at this point, origin is at currentpoint, nx is 0, ny > 0, r=1
+
+        % if ny > 2, change r to half of ny (based on W3 SVG spec F.6.2)
+        ny 2 gt {
+            /r ny 2 div def
+        } if
+
+        % compute and draw the arc
+        /l ny 2 div def
+        /s r dup mul l dup mul sub sqrt def 
+        /a l s atan def 
+        sweep 0 gt large 0 gt xor {
+            -1 1 scale
+        } if
+        large 0 gt {
+            spline {
+                s neg l r a neg 180 sparcn
+                s neg l r 180 a sparcn
+            } {
+                s neg l r a neg a arcn
+            } ifelse
+        } { 
+            spline {
+                s neg l r a neg a sparc
+            } {
+                s neg l r a neg a arc
+            } ifelse
+        } ifelse
+
+        % return to original ref frame
+        originalmatrix setmatrix
+    } def
+end
+
+/svgarc {ellipsedict begin false false svgarc_base end} def
+/rsvgarc {ellipsedict begin true false svgarc_base end} def
+/svgsparc {ellipsedict begin false true svgarc_base end} def
+/rsvgsparc {ellipsedict begin true true svgarc_base end} def
+
+
+/softscale {
+    dup dup scale
+    1 exch div thicken
+} def
+
+/thicken {
+    currentlinewidth mul setlinewidth
+} def
+
+/box {
+    % lbrt
+    4 copy 3 -1 roll exch 3 1 roll 6 2 roll
+    % lb rb rt lt
+    moveto lineto lineto lineto closepath
+} def
+
+/roundboxdict 5 dict def
+%box with rounded corners
+/roundbox {
+    %lbrt corner_radius
+    roundboxdict begin
+        /c arg
+        /t exch c sub def 
+        /r exch c sub def
+        /b exch c add def
+        /l exch c add def
+        r t c 0 90 arc
+        l t c 90 180 arc
+        l b c 180 270 arc
+        r b c 270 360 arc
+        closepath
+    end
+} def
+
+/curr_path {
+    false
+    gsave
+        {2 {pop} repeat pop true}
+        {2 {pop} repeat pop true}
+        {6 {pop} repeat pop true}
+        {0 {pop} repeat pop true}
+        pathforall
+    grestore
+} def
+
+/goto {
+    curr_path {lineto} {moveto} ifelse
+} def
+
+/centershowdict 4 dict def
+/centershow {
+    centershowdict begin
+        gsave
+            0 0 moveto
+            dup true charpath pathbbox
+            /top exch def
+            /right exch def
+            /bottom exch def
+            /left exch def
+        grestore
+        gsave
+            left right add 2 div neg
+            top bottom add 2 div neg
+            moveto show
+        grestore
+    end
+} def
+
+% use anonymous dictionary in case function contains circrepeat
+/circrepeat {
+    2 dict begin
+    /cr_function arg
+    /cr_n arg
+    cr_n abs {
+        cr_function
+        360 cr_n div rotate
+    } repeat
+    end
+} def
+
+/grayfill { gsave setgray fill grestore } def
+/rgbfill { gsave setrgbcolor fill grestore } def
+/whitefill { 1 grayfill } def
+
+% render an eps file, given filename and bounding box, 
+% with ll at 0,0 and height of 1
+/epsdict 10 dict def
+/include_eps {
+    epsdict begin
+        /t arg
+        /r arg
+        /b arg
+        /l arg
+        /file arg
+        % code from eps spec
+        /b4_Inc_state save def          % Save state for cleanup
+        /dict_count countdictstack def  % Count objects on dict stack
+        /op_count count 1 sub def       % Count objects on operand stack
+        userdict begin                  % Push userdict on dict stack
+        /showpage { } def               % Redefine showpage, { } = null proc
+        0 setgray 0 setlinecap          % Prepare graphics state
+        1 setlinewidth 0 setlinejoin
+        10 setmiterlimit [ ] 0 setdash newpath
+        /languagelevel where            % If level not equal to 1 then
+        {
+            pop languagelevel           % set strokeadjust and
+            1 ne                        % overprint to their defaults.
+            {
+                false setstrokeadjust false setoverprint
+            } if
+        } if
+
+        1 t b sub div dup scale
+        l neg b neg translate
+
+        l b r t box clip newpath
+
+        file run
+
+        count op_count sub {pop} repeat
+        countdictstack dict_count sub {end} repeat
+        b4_Inc_state restore
+    end
+} def
+
+/shavedict 10 dict def
+/shavepath {
+    shavedict begin
+    % important vars: oldx oldy startx starty
+        [
+            {
+                /y arg /x arg
+                /startx x def /starty y def
+                /oldx x def /oldy y def
+                x y 
+                /moveto cvx
+            }
+            {
+                /y arg /x arg
+                oldx x sub dup mul oldy y sub dup mul add sqrt
+                currentlinewidth 0.1 mul gt {
+                    % line is not too short to ignore
+                    /oldx x def /oldy y def
+                    x y
+                    /lineto cvx
+                } if
+            }
+            {
+                /y3 arg /x3 arg
+                /y2 arg /x2 arg
+                /y1 arg /x1 arg
+                oldx x1 sub dup mul oldy y1 sub dup mul add sqrt
+                x1 x2 sub dup mul y1 y2 sub dup mul add sqrt
+                x2 x3 sub dup mul y2 y3 sub dup mul add sqrt
+                add add
+                currentlinewidth 0.1 mul gt {
+                    % curve is not too short to ignore
+                    /oldx x3 def /oldy y3 def
+                    x1 y1 x2 y2 x3 y3
+                    /curveto cvx
+                } if
+            }
+            {
+                oldx startx sub dup mul oldy starty sub dup mul add sqrt
+                currentlinewidth 0.1 mul le {
+                    % closepath is too short - might cause trouble
+                    % change end of last segment to exactly start point
+                    % top of stack is either x y curveto or x y lineto
+                    3 1 roll
+                    pop pop startx starty 
+                    3 -1 roll
+                } if
+                /oldx startx def /oldy starty def
+                /closepath cvx
+            }
+            pathforall
+        ] 
+        newpath
+        cvx exec
+    end
+} def
+
+% colors
+% divide distance from white/black by x
+
+/lighten {
+    currentrgbcolor
+    3 {
+        4 -1 roll
+        dup
+        5 1 roll
+        exch 1 exch sub exch div 1 exch sub
+        3 1 roll
+    } repeat
+    setrgbcolor
+    pop
+} def
+/darken {
+    currentrgbcolor
+    3 {
+        4 -1 roll
+        dup
+        5 1 roll
+        div
+        3 1 roll
+    } repeat
+    setrgbcolor
+    pop
+} def
+
+
+% multiply distance from white/black by x
+/mul_lighten {
+    currentrgbcolor
+    3 {
+        4 -1 roll
+        dup
+        5 1 roll
+        exch 1 exch sub exch mul 1 exch sub
+        3 1 roll
+    } repeat
+    setrgbcolor
+    pop
+} def
+/mul_darken {
+    currentrgbcolor
+    3 {
+        4 -1 roll
+        dup
+        5 1 roll
+        mul
+        3 1 roll
+    } repeat
+    setrgbcolor
+    pop
+} def

@@ -1,0 +1,42 @@
+%!
+(base.ps) run
+(textbase.ps) run
+72 softscale
+gsave
+    4.25 10 translate
+    0 0 1 circle stroke
+    gsave
+	/Helvetica-Bold findfont 1.5 scalefont setfont
+	X_center
+	(SUMMON ROOK)
+	8 1.5 {center_base_show} paragraph_show
+	(SUMMONROOK) 8 {center_base_show} width_line_show
+    grestore
+    gsave
+	0 exch -1.5 mul translate
+	/Helvetica findfont 0.75 scalefont setfont
+	X_center
+	(Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.)
+	8 0.75 {center_base_show} paragraph_show
+    grestore
+    newpath
+grestore
+gsave
+    4.25 5.5 translate
+    1 0 0 setrgbcolor
+    0 setlinejoin
+    0.75 setlinewidth
+    2.95 0 moveto
+    0 0 3 0 90 arc
+    0 0 2.95 90 180 arc
+    -3 0 lineto
+    0 -3 lineto
+    0 -3.001 0.001 -3 0 -3 curveto
+    3 0 lineto
+    3 0.001 lineto
+    closepath 
+    shavepath
+    stroke
+grestore
+showpage

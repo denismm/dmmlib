@@ -1,0 +1,52 @@
+%!
+(base.ps) run
+(lines.ps) run
+(polar.ps) run
+
+/test {
+    2 10 pgoto 4 10 plineto stroke
+    2 10 pgoto 1 10 plineto stroke
+
+    2 10 pgoto 4 90 plineto stroke
+    2 10 pgoto 2 90 plineto stroke
+    2 10 pgoto 1 90 plineto stroke
+    2 10 pgoto 0.1 179 plineto stroke
+    2 10 pgoto 0.1 90 plineto stroke
+    2 10 pgoto 0.1 45 plineto stroke
+    2 10 pgoto 4 45 plineto stroke
+    2 10 pgoto 4 135 plineto stroke
+    2 10 pgoto 1 135 plineto stroke
+    2 10 pgoto 8 90 plineto stroke
+
+    2 10 pgoto 4 -90 plineto stroke
+    2 10 pgoto 2 -90 plineto stroke
+    2 10 pgoto 1 -90 plineto stroke
+    2 10 pgoto 0.1 -169 plineto stroke
+    2 10 pgoto 0.1 -90 plineto stroke
+    2 10 pgoto 0.1 -45 plineto stroke
+    2 10 pgoto 4 -45 plineto stroke
+    2 10 pgoto 4 -135 plineto stroke
+    2 10 pgoto 1 -135 plineto stroke
+    2 10 pgoto 8 -90 plineto stroke
+} def
+
+72 softscale
+4.25 5.5 translate
+
+gsave
+    0.5 setgray 
+    3 thicken
+    test
+grestore
+true set_polar_spline_mode
+gsave
+    1 0 0 setrgbcolor
+    1 3 div thicken
+    test
+grestore
+/firstr_mode true def
+gsave
+    0 0 1 setrgbcolor
+    1 3 div thicken
+    test
+showpage

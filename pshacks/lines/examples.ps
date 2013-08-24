@@ -1,0 +1,321 @@
+(base.ps) run
+(lines.ps) run
+
+/Lightning {
+    gsave
+	0.25 setlinewidth
+	-0.5 0.9 moveto
+	0.5 0.9 lineto
+	-0.25 0 lineto
+	0.25 0 lineto
+	0 -1 lineto
+	boltstroke
+	-0.5 -1 moveto -0.5 0 -1 0 -1 1 curveto boltstroke
+	0.5 -1 moveto 0.5 0 1 0 1 1 curveto boltstroke
+    grestore
+} def
+/Flame {
+    gsave
+	0.25 setlinewidth
+	1 setlinecap
+	-0.75 -0.75 moveto
+	-1.25 0 0.25 0 -0.75 1 curveto boltstroke
+	0.3 0.4 0.45 0 180 arc
+	boltstroke
+	0.8 -0.8 moveto
+	0.8 -0.2 0 0 0.2 0.4 curveto boltstroke
+	0 -0.8 moveto -0.1 0.1 lineto boltstroke
+    grestore
+} def
+
+/Bipoint {
+    gsave
+	0.25 setlinewidth
+	0.5 1 moveto 
+	0.5 0 lineto
+	0 0 lineto
+	0 -1 lineto
+	bipointstroke
+	0 1 moveto
+	0 0.5 lineto
+	1 0.5 lineto 
+	bipointstroke
+	1 -1 moveto
+	0.5 -0.5 lineto
+	-0.5 -0.5 lineto
+	-0.5 0.5 lineto
+	-1 1 lineto
+	bipointstroke
+
+    grestore
+} def
+
+/Calligraph {
+    gsave
+	0.25 setlinewidth
+	/cstroke {brushystroke} def
+	0.5 0 0.5 180 90 sparcn
+	0.9 -0.9 lineto
+	0 -0.9 0 -0.5 -0.9 -0.5 curveto
+	cstroke
+	-0.5 0.5 0.4 30 180 sparc
+	-0.9 -0.9 lineto
+	cstroke
+    grestore
+} def
+/Calligraph {
+    gsave
+	0.25 setlinewidth
+	2 setlinecap
+	0.9 softscale
+	-1 0.5 moveto 
+	0.5 1 0.5 -90 0 sparc
+	brushystroke
+	0 1 moveto
+	0 0 lineto
+	-1 0 lineto
+	-1 -0.5 lineto
+	0 -1 lineto
+	brushystroke
+	0.5 -0.5 0.5 90 -90 sparcn
+	brushystroke
+	0.5 -0.5 moveto
+	-0.5 -0.5 -0.5 -1 -1 -1 curveto brushystroke
+    grestore
+} def
+
+/Calligraph2 {
+    gsave
+	1 setlinecap
+	1 setlinejoin
+	0.25 setlinewidth
+	0.9 softscale
+	0 3 sqrt 2 div moveto
+	-1 3 sqrt -2 div lineto
+	1 3 sqrt -2 div lineto
+	closepath brushystroke
+	2 setlinejoin
+	0 setlinecap
+	-1 1 moveto 0 0 lineto 1 1 lineto brushystroke
+	0 -0.25 moveto 0 3 sqrt -2 div lineto brushystroke
+    grestore
+} def
+
+/BoltMiter {
+    gsave
+	0.5 dup scale
+	0 -0.25 translate
+	2 setlinewidth
+	-2 3 sqrt mul 2 moveto 
+	0 0 lineto 
+	2 3 sqrt mul 2 lineto boltstroke
+	1 0 0 setrgbcolor
+	0.05 setlinewidth
+	1 setlinecap
+	30 rotate
+	2 {
+	    -0.5 -0.5 moveto 1.25 -0.5 lineto stroke
+	    -0.5 0.5 moveto 1.25 0.5 lineto stroke
+	    % 1.25 -0.5 moveto 1.25 0.5 lineto stroke
+	    gsave
+		0 0 1 setrgbcolor
+		0 0 moveto 4 0 lineto stroke
+	    grestore
+	    120 rotate
+	} repeat
+    grestore
+} def
+
+/Joins {
+    gsave
+	0.75 setlinewidth
+	0 0.75 translate
+	-2 3 sqrt mul 2 moveto 0 0 lineto 2 3 sqrt mul 2 lineto boltstroke
+	0 -0.75 translate
+	1 setlinejoin
+	-2 3 sqrt mul 2 moveto 0 0 lineto 2 3 sqrt mul 2 lineto boltstroke
+	0 -0.75 translate
+	2 setlinejoin
+	-2 3 sqrt mul 2 moveto 0 0 lineto 2 3 sqrt mul 2 lineto boltstroke
+    grestore
+} def
+/Joins {
+    gsave
+	0.75 setlinewidth
+	-0.7 0.7 translate
+	-3 0 moveto 0 0 lineto 0 3 lineto boltstroke
+	0.7 -0.7 translate
+	1 setlinejoin
+	-3 0 moveto 0 0 lineto 0 3 lineto boltstroke
+	0.7 -0.7 translate
+	2 setlinejoin
+	-3 0 moveto 0 0 lineto 0 3 lineto boltstroke
+    grestore
+} def
+
+/Arrows {
+    gsave
+	0.5 setlinewidth
+	0.6 softscale
+	0.5 setgray
+	0 -1.75 moveto 0 1 lineto stroke
+	-1 -0.75 moveto 0 1 lineto 1 -0.75 lineto stroke
+	0 setgray
+	0 -1.75 moveto 0 1 lineto brushystroke
+	-1 -0.75 moveto 0 1 lineto 1 -0.75 lineto brushystroke
+    grestore
+} def
+
+/CalliThick {
+    gsave
+	0.25 setlinewidth
+	-1 0.7 moveto 1 0.7 lineto 0 3 div callistroke 
+	-1 0 moveto 1 0 lineto 1 3 div callistroke
+	-1 -0.7 moveto 1 -0.7 lineto 2 3 div callistroke 
+    grestore
+} def
+/CalliExp {
+    gsave
+	1 setlinewidth
+	1 3 div softscale
+	-3 0 moveto 3 0 lineto brushystroke
+	1 0 0 setrgbcolor
+	0.1 setlinewidth
+	-3 1.5 dot
+	-1 0.5 dot
+	1 0.5 dot
+	3 1.5 dot
+	1 setlinecap
+	0 0 1 setrgbcolor
+	-3 0 moveto 3 0 lineto stroke
+    grestore
+} def
+/ArcSparc {
+    gsave
+	0.25 setlinewidth
+	gsave
+	    0.05 thicken
+	    0 1 moveto 0 -1 lineto stroke
+	    1 0 moveto -1 0 lineto stroke
+	grestore
+	0.5 setgray
+	0 0 0.75 -30 150 arc brushystroke
+	0 setgray
+	0 0 0.75 -30 150 sparcn brushystroke
+	0.05 thicken
+	1 0 0 setrgbcolor
+	% 0 0 0.75 circle stroke
+    grestore
+} def
+/BadSparc {
+    gsave
+	0.125 setlinewidth
+	90 rotate
+	/r 1 def
+	/a 112.5 def
+	4 {
+	    gsave
+		0.125 thicken
+		1 0 0 setrgbcolor
+		0 0 r circle stroke
+	    grestore
+	    0 0 r a dup neg sparcn brushystroke
+	    /a a 22.5 sub def
+	    /r r 0.125 sub def
+	} repeat
+
+    grestore
+} def
+/DProblem {
+    gsave
+	0.25 setlinewidth
+	0.75 softscale
+	0 -1.2 translate
+	gsave
+	    0.75 softscale
+	    
+	    0 0 1 0 180 sparc 1 3 div 
+	    closepath
+	    callistroke
+	grestore
+	0 0.8 translate
+	gsave
+	    0.75 softscale
+	    0 0 1 0 180 sparc 1 3 div 
+	    callistroke
+	grestore
+	0 0.9 translate
+	gsave
+	    0.75 softscale
+	    2 0 moveto
+	    0 0 1 0 180 sparc 1 3 div 
+	    -2 0 lineto
+	    callistroke
+	grestore
+    grestore
+} def
+
+/DSolution {
+    gsave
+	0.25 setlinewidth
+	0.75 softscale
+	0 -1.2 translate
+	gsave
+	    0.75 softscale
+	    
+	    0 0 1 0 180 arc 
+	    closepath
+	    brushystroke
+	grestore
+	0 0.8 translate
+	gsave
+	    0.75 softscale
+	    0 0 1 0 180 arc 
+	    brushystroke
+	grestore
+	0 0.9 translate
+	gsave
+	    0.75 softscale
+	    2 0 moveto
+	    0 0 1 0 180 arc 
+	    -2 0 lineto
+	    brushystroke
+	grestore
+    grestore
+} def
+
+/SProblem {
+    gsave
+	0.25 setlinewidth
+	-1 0 moveto
+	-0.5 0 lineto
+	0 -1 0 1 0.5 0 curveto
+	1 0 lineto
+	brushystroke
+    grestore
+} def
+
+/Outline {
+    gsave
+	0.25 setlinewidth
+	2 setlinejoin
+	0 1 moveto
+	1 0 lineto
+	-1 0 lineto
+	0 -1 lineto
+	0.01 brushyoutline
+	0 setlinejoin
+	-1 1 moveto -0.333 0 lineto -1 -1 lineto 0.01 boltoutline
+	1 1 moveto 0.333 0.333 lineto 0.333 -0.333 lineto 1 -1 lineto 0.01 bipointoutline
+    grestore
+} def
+
+%%EndProlog
+
+72 softscale
+4.25 5.5 translate
+2 softscale
+1.5 dup scale
+Joins
+-1.1 dup 1.1 dup box stroke
+showpage

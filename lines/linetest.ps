@@ -1,0 +1,724 @@
+%!
+
+/acos {
+    dup dup mul 1 exch sub sqrt atan
+} def
+/asin {
+    dup dup mul 1 exch sub sqrt exch atan
+} def
+
+% handle zeros
+/myatan {
+    dup 0 eq {
+        pop dup 0 eq {
+            pop 0
+        } {
+            0 atan
+        } ifelse
+    } {
+        atan
+    } ifelse
+} def
+
+% mod that accepts floats and makes negatives positive
+/mod_dict 2 dict def
+/mymod {
+    mod_dict begin
+	/modulus exch def
+	/original exch def
+	original 0 lt original modulus ge or {
+	    original modulus div floor neg 
+	    modulus mul original add 
+	    /original exch def
+	} if
+	original
+    end
+} def
+
+% allow division by zero
+/zdiv {
+    dup 0 eq {
+	pop pop 0
+    } {
+	div
+    } ifelse
+} def
+
+/boltdict 20 dict def
+
+boltdict begin
+    /pathtolines {
+	% analyze current path, creating pathpoints array
+	% turn all curves into lines
+	% pathpoints format: [x y lengthsofar]
+
+        flattenpath
+        /pathcount 0 def
+        gsave
+            { pop pop /pathcount pathcount 1 add def } % moveto
+            { pop pop /pathcount pathcount 1 add def } % lineto
+            { quit } % curveto
+            { /pathcount pathcount 1 add def } % closepath
+	    pathforall
+        grestore
+        % pathcount is number of points in line
+        /pathpoints pathcount array def
+	/i 0 def
+	/x 0 def /y 0 def /linelen 0 def
+
+	/addline {
+	    i 0 eq {quit} if
+	    /ny exch def /nx exch def
+	    % segment length
+	    /seglen ny y sub dup mul nx x sub dup mul add sqrt def
+	    seglen currentlinewidth 10 div gt {
+		% linelen += length, update x and y
+		seglen linelen add /linelen exch def
+		/x nx def /y ny def
+		pathpoints i [x y linelen] put
+		/i i 1 add def
+	    } {
+		/pathcount pathcount 1 sub def
+	    } ifelse
+	} def
+
+	% moveto
+	{
+	    /y exch def /x exch def
+	    i 0 ne {quit} if
+	    pathpoints i [x y linelen] put
+	    /i i 1 add def
+	}
+	{ addline } % lineto
+	{ quit } % curve
+	{
+	    /ny pathpoints 0 get 1 get def
+	    /nx pathpoints 0 get 0 get def
+	    nx ny addline
+	} % close
+	pathforall
+    } def
+
+    % internal helper function for calligraphic, etc.
+    /pathtocurves {
+	% analyze current path, creating pathpoints array
+	% save all lines as 4-point curves
+	% pathpoints format: [x y lengthsofar ptype]
+	% ptype is /p for point or /c for control point
+
+	% count points in path & determine closedness
+
+	/pathcount 0 def
+	/closed false def
+        gsave
+            { 2 {pop} repeat /pathcount pathcount 1 add def } % moveto
+            { 2 {pop} repeat /pathcount pathcount 3 add def } % lineto
+            { 6 {pop} repeat /pathcount pathcount 3 add def } %curveto
+            { /pathcount pathcount 3 add def /closed true def } % closepath
+	    pathforall
+        grestore
+        % pathcount is number of points in line
+
+	% move path points into array
+        /pathpoints pathcount array def
+	/i 0 def
+	/x 0 def /y 0 def /linelen 0 def
+
+	% define internal helper functions
+	/addcurve {
+	    % at this point, treat as 3 line segments
+	    % tag control points as "c" instead of "p"
+	    6 2 roll
+	    4 2 roll
+	    /types [/c /c /p] def
+	    /curvelen 0 def
+	    /curvepoints 3 array def
+	    /ci 0 def
+	    3 {
+		/ny exch def /nx exch def
+		% segment length
+		ny y sub dup mul nx x sub dup mul add sqrt
+		% linelen += length, update x and y
+		curvelen add /curvelen exch def
+		/x nx def /y ny def
+		/ptype types ci get def
+		curvepoints ci [x y linelen curvelen add ptype] put
+		/ci ci 1 add def
+	    } repeat
+	    curvelen currentlinewidth 10 div gt {
+		/linelen linelen curvelen add def
+		0 1 2 {
+		    /ci exch def
+		    pathpoints ci i add curvepoints ci get put
+		} for
+		/i i 3 add def
+	    } {
+		/pathcount pathcount 3 sub def
+	    } ifelse
+	} def
+
+	/addline {
+	    /ny exch def /nx exch def
+	    % create fake control points
+	    x 2 mul 3 div nx 3 div add  y 2 mul 3 div ny 3 div add
+	    x 3 div nx 2 mul 3 div add  y 3 div ny 2 mul 3 div add
+	    nx ny
+	    addcurve
+	} def
+
+	% args to pathforall
+	% moveto
+	{
+	    /y exch def /x exch def
+	    i 0 ne {quit} if
+	    pathpoints i [x y linelen /p] put
+	    /i i 1 add def
+	}
+	% lineto
+	{
+	    i 0 eq {quit} if
+	    addline
+	}
+	% curve
+	{ 
+	    i 0 eq {quit} if
+	    addcurve
+	}
+	% close
+	{
+	    i 0 eq {quit} if
+	    /closed true def
+	    /ny pathpoints 0 get 1 get def
+	    /nx pathpoints 0 get 0 get def
+	    nx ny addline
+	} pathforall
+    } def
+
+    /drawbevel {
+	/forward exch def
+	forward {
+	    /a1 direction def
+	    /a2 direction_2 def
+	} {
+	    /a1 direction_2 def
+	    /a2 direction def
+	} ifelse
+	currentlinejoin 1 eq {
+	    a1 a2 sub
+	    dup 0.1 le { 360 add } if
+	    dup 180 lt {
+		a2 add /a1 exch def
+		x y lineout a1 a2 arcn
+	    } {
+		pop
+		x a2 cos lineout mul add
+		y a2 sin lineout mul add
+		lineto
+	    } ifelse
+	} {
+	    x a2 cos lineout mul add
+	    y a2 sin lineout mul add
+	    lineto
+	} ifelse
+    } def
+end
+
+% line of varying widths, using only lineto
+% call with function that determines "line radius" (1/2 thickness)
+/var_line {
+    boltdict begin
+	/radfunc exch def
+
+	pathtolines
+
+	% determine miter and bevel points and directions
+	0 1 pathcount 1 sub {
+	    /i exch def
+	    /l i 1 sub pathcount mymod cvi def
+	    /n i 1 add pathcount mymod cvi def
+
+	    /cur_point pathpoints i get def
+	    /x cur_point 0 get def
+	    /y cur_point 1 get def
+	    /dist cur_point 2 get def
+
+	    /next_point pathpoints n get def
+	    /nx next_point 0 get def
+	    /ny next_point 1 get def
+	    /ndir ny y sub nx x sub myatan def
+
+	    /last_point pathpoints l get def
+	    /lx last_point 0 get def
+	    /ly last_point 1 get def
+	    /ldir ly y sub lx x sub myatan def
+
+	    /bevel false def
+	    /direction_2 0 def
+
+	    % effective line radius at this point
+	    /linerad radfunc exec def
+
+	    i 0 eq i pathcount 1 sub eq or {
+		/lineout linerad def
+		i 0 eq {
+		    /direction ndir 90 add def
+		    currentlinecap 2 eq {
+			/x x ndir cos neg lineout mul add def
+			/y y ndir sin neg lineout mul add def
+		    } if
+		} {
+		    /direction ldir 90 sub def
+		    currentlinecap 2 eq {
+			/x x ldir cos neg lineout mul add def
+			/y y ldir sin neg lineout mul add def
+		    } if
+		} ifelse
+		/direction_2 direction def
+	    } {
+		/theta ndir ldir sub def
+		theta 0 lt {
+		    /theta theta 360 add def
+		} if
+		/phi 90 theta 2 div sub def
+		% actual distance to junction point
+		phi 90 eq {
+		    /lineout 0 def
+		} {
+		    /lineout linerad phi cos div def
+		} ifelse
+		% direction to junction point
+		/direction ndir 90 add phi add def
+		0 currentlinejoin ne
+		lineout linerad zdiv currentmiterlimit gt or {
+		    /bevel true def
+		    /lineout linerad def
+		    /direction ldir 90 sub 360 mymod def
+		    /direction_2 ndir 90 add 360 mymod def
+		    i pathcount 1 sub eq {
+			/bevel false def
+		    } if
+		} {
+		    /direction_2 direction def
+		} ifelse
+	    } ifelse
+	    pathpoints i [x y dist /l direction lineout bevel direction_2] put
+	} for
+
+	% draw line
+	newpath
+	% side 1
+	0 1 pathcount 1 sub {
+	    /i exch def
+	    /cur_point pathpoints i get def
+	    /x cur_point 0 get def
+	    /y cur_point 1 get def
+	    /direction cur_point 4 get def
+	    /lineout cur_point 5 get def
+	    /bevel cur_point 6 get def
+	    /direction_2 cur_point 7 get def
+	    x direction cos lineout mul add
+	    y direction sin lineout mul add
+	    i 0 eq {
+		moveto
+	    } {
+		lineto
+	    } ifelse
+	    bevel {
+		true drawbevel
+	    } if
+	} for
+	% end circle as needed
+	currentlinecap 1 eq {
+	    x y lineout direction direction 180 add arcn
+	} {
+	    /direction direction 180 add def
+	    x direction cos lineout mul add
+	    y direction sin lineout mul add
+	    lineto
+	} ifelse
+	% side 2
+	pathcount 2 sub -1 0 {
+	    /i exch def
+	    /cur_point pathpoints i get def
+	    /x cur_point 0 get def
+	    /y cur_point 1 get def
+	    /direction cur_point 4 get 180 add def
+	    /lineout cur_point 5 get def
+	    /bevel cur_point 6 get def
+	    /direction_2 cur_point 7 get 180 add def
+	    x direction_2 cos lineout mul add
+	    y direction_2 sin lineout mul add
+	    lineto
+	    bevel { false drawbevel } if
+	} for
+	% start circle if needed
+	currentlinecap 1 eq {
+	    x y lineout direction direction 180 add arcn
+	} if
+	closepath
+    end
+} def
+
+/bolt {
+    { dist linelen div 1 exch sub currentlinewidth mul 2 div } var_line
+} def
+/boltstroke {
+    bolt fill
+} def
+
+/boltstrokestroke {
+    gsave
+	bolt
+	setlinewidth
+	stroke
+    grestore
+    newpath
+} def
+
+/bipoint {
+    {i 0 eq i pathcount 1 sub eq or {0} {currentlinewidth 2 div} ifelse}
+    var_line
+} def
+
+/bipointstroke {
+    bipoint fill
+} def
+
+/bipointstrokestroke {
+    gsave
+	bipoint
+	setlinewidth
+	stroke
+    grestore
+    newpath
+} def
+
+
+/calligraphic {
+    boltdict begin
+	/spline_offset exch def
+	% /spline_offset 0 def
+	% analyze path, moving points into pathpoints array
+	pathtocurves
+
+	% determine actual points for drawing
+	% place direction and distance to actual point 
+	%     into pathpoints entries, fields 4 and 5
+	0 1 pathcount 1 sub {
+	    /i exch def
+	    % l is last, n is next.  Strange math to make the edges work
+	    /l i 0 eq { pathcount 2 sub } { i 1 sub } ifelse def
+	    /n i pathcount 1 sub eq { 1 } { i 1 add } ifelse def
+
+	    /cur_point pathpoints i get def
+	    /x cur_point 0 get def
+	    /y cur_point 1 get def
+	    /dist cur_point 2 get def
+	    /ptype cur_point 3 get def
+
+	    /next_point pathpoints n get def
+	    /nx next_point 0 get def
+	    /ny next_point 1 get def
+	    /ndir ny y sub nx x sub myatan def
+
+	    /last_point pathpoints l get def
+	    /lx last_point 0 get def
+	    /ly last_point 1 get def
+	    /ldir ly y sub lx x sub myatan def
+	    
+	    /bevel false def
+	    /direction_2 0 def
+	    i 0 eq i pathcount 1 sub eq or closed not and {
+		% starting or ending point of stroke - no miter
+		/lineout currentlinewidth 2 div def
+		i 0 eq {
+		    /direction ndir 90 add def
+		    currentlinecap 2 eq {
+			    /x x ndir cos neg lineout mul add def
+			    /y y ndir sin neg lineout mul add def
+		    } if
+		} {
+		    /direction ldir 90 sub def
+		    currentlinecap 2 eq {
+			    /x x ldir cos neg lineout mul add def
+			    /y y ldir sin neg lineout mul add def
+		    } if
+		} ifelse
+	    } {
+		/theta ndir ldir sub def
+		theta 0 lt {
+		    /theta theta 360 add def
+		} if
+		/phi 90 theta 2 div sub def
+		% effective line radius at this point
+		/linerad currentlinewidth 2 div def
+		ptype /c eq {
+		    /linerad linerad spline_offset mul def
+		} if
+		% actual distance to junction point
+		/lineout linerad phi cos div def
+		% direction to junction point
+		/direction ndir 90 add phi add def
+		% check miter limit - not for control points
+		0 currentlinejoin ne
+		lineout linerad zdiv currentmiterlimit gt or
+		ptype /p eq and {
+		    /bevel true def
+		    /lineout linerad def
+		    /direction ldir 90 sub 360 mymod def
+		    /direction_2 ndir 90 add 360 mymod def
+
+		    % special case for end point
+		    i pathcount 1 sub eq {
+			/bevel false def
+		    } if
+		} if
+	    } ifelse
+	    pathpoints i bevel {
+		[x y dist ptype direction lineout bevel direction_2] 
+	    } {
+		[x y dist ptype direction lineout bevel direction] 
+	    } ifelse put
+	} for
+	
+	% draw actual path
+	newpath
+
+	% starting point
+	/cur_point pathpoints 0 get def
+	/x cur_point 0 get def
+	/y cur_point 1 get def
+	/direction cur_point 4 get def
+	/lineout cur_point 5 get def
+	/bevel cur_point 6 get def
+	/direction_2 cur_point 7 get def
+	x direction cos lineout mul add
+	y direction sin lineout mul add
+	moveto
+	bevel {
+	    true drawbevel
+	} if
+
+	% lines from 1 to N
+	1 1 pathcount 1 sub {
+	    /i exch def
+	    /cur_point pathpoints i get def
+	    /x cur_point 0 get def
+	    /y cur_point 1 get def
+	    /ptype cur_point 3 get def
+	    /direction cur_point 4 get def
+	    /lineout cur_point 5 get def
+	    /bevel cur_point 6 get def
+	    /direction_2 cur_point 7 get def
+	    x direction cos lineout mul add
+	    y direction sin lineout mul add
+	    ptype /p eq {
+		curveto
+	    } if 
+	    bevel {
+		true drawbevel
+	    } if
+	} for
+
+	% move to starting point of the line back,
+	%     adding circle at end if necessary 
+	% even if beveled, direction_1 is appropriate
+	currentlinecap 1 eq closed not and {
+	    x y currentlinewidth 2 div direction direction 180 add arcn
+	} {
+	    /direction direction 180 add def
+	    x direction cos lineout mul add
+	    y direction sin lineout mul add
+	    lineto
+	} ifelse
+
+	% lines back
+	pathcount 2 sub -1 0 {
+	    /i exch def
+	    /cur_point pathpoints i get def
+	    /x cur_point 0 get def
+	    /y cur_point 1 get def
+	    /ptype cur_point 3 get def
+	    /direction cur_point 4 get 180 add def
+	    /lineout cur_point 5 get def
+	    /bevel cur_point 6 get def
+	    /direction_2 cur_point 7 get 180 add def
+	    x direction_2 cos lineout mul add
+	    y direction_2 sin lineout mul add
+	    ptype /p eq {
+		curveto
+	    } if 
+	    bevel {
+		false drawbevel
+	    }  if
+	} for
+
+	% circle at end if necessary
+	currentlinecap 1 eq closed not and {
+	    x y currentlinewidth 2 div direction direction 180 add arcn
+	} if
+	closepath
+    end
+} def
+
+% call with a number argument: thickness of control points
+/callistroke { calligraphic fill } def
+
+% call with 2 number arguments: subline width and control point thickness
+/callistrokestroke {
+    gsave
+	calligraphic
+	setlinewidth
+	stroke
+    grestore
+    newpath 
+} def
+
+/spindly { 0 calligraphic } def
+
+/spindlystroke { 0 callistroke } def
+
+/spindlystrokestroke { 0 callistrokestroke } def
+
+/spcircle {
+    3 copy 3 -1 roll add exch moveto
+    3 copy 0 180 sparc
+    180 0 sparc
+    closepath
+} def
+
+/softscale {
+    dup dup scale
+    currentlinewidth exch div setlinewidth
+} def
+
+/thicken {
+    currentlinewidth mul setlinewidth
+} def
+
+/curr_path {
+    false
+    gsave
+	{2 {pop} repeat pop true}
+	{2 {pop} repeat pop true}
+	{6 {pop} repeat pop true}
+	{0 {pop} repeat pop true}
+	pathforall
+    grestore
+} def
+/arg { exch def } def
+/sparcdict 6 dict def
+/sparc {
+    sparcdict begin
+	/a2 arg
+	/a1 arg
+	/r arg
+	/y arg
+	/x arg
+	x y translate
+	r dup scale
+	a1 rotate
+	1 0
+	curr_path {
+	    currentpoint pop 1 sub abs currentlinewidth 10 div lt 
+	    currentpoint exch pop 0 sub abs currentlinewidth 10 div lt and
+	    {
+		pop pop
+	    } {
+		lineto
+	    } ifelse
+	} {
+	    moveto
+	} ifelse
+	/adiff a2 a1 sub dup 360 idiv 360 mul sub def
+	adiff 0 lt {
+	    /adiff adiff 360 add def
+	} if
+	/theta adiff 2 div def
+	/offset 1 theta cos sub theta sin div 0.75 div def
+	1 offset
+	adiff cos adiff 90 sub cos offset mul add
+	adiff sin adiff 90 sub sin offset mul add
+	adiff cos adiff sin
+	curveto
+	a1 neg rotate
+	1 r div dup scale
+	x neg y neg translate
+    end
+} def
+/sparcn {
+    sparcdict begin
+    /a2 arg
+    /a1 arg
+    /r arg
+    /y arg
+    /x arg
+    -1 1 scale
+    x neg y r 180 a1 sub 180 a2 sub sparc
+    -1 1 scale
+    end
+} def
+
+/circle { 0 360 arc closepath } def
+
+/softscale {
+    dup dup scale
+    currentlinewidth exch div setlinewidth
+} def
+
+/thicken {
+    currentlinewidth mul setlinewidth
+} def
+
+/uncialstroke { 1 3 div callistroke } def
+% /uncialstroke { currentlinewidth 0.1 mul boltstrokestroke } def
+
+/UrsaMinor {
+    gsave 
+	0.25 softscale
+	1 1 2 sqrt 135 -135 arc
+	1 -1 lineto 0 -2 lineto -1 -1 lineto 0 0 lineto
+	uncialstroke
+    grestore
+} def
+
+/UrsaMajor { 
+    gsave
+	0.25 softscale
+	-2 0 moveto
+	-2 4 3 div 0 4 3 div 0 0 curveto
+        % -1 0 1 180 0 arcn
+        1 0 1 180 360 arc
+        0 0 lineto
+	uncialstroke
+    grestore
+} def
+
+
+%%EndProlog
+
+72 softscale
+4.25 5.5 translate
+0.25 setlinewidth
+0 setlinecap
+2 setlinejoin
+gsave
+    1 0 0 setrgbcolor
+    0 -2 moveto 4 -2 lineto stroke
+grestore
+/teststroke {uncialstroke} def
+0.5 setgray
+0 0 2 circle teststroke
+0 0 moveto 0 -3 lineto 2 -4 lineto 2 -2 lineto teststroke
+0 0 moveto 0 2 2 2 2 4 curveto teststroke
+-3 0 moveto -3 4 3 4 3 0 curveto 
+3 -4 -3 -4 -3 0 curveto 
+teststroke
+gsave
+    2 softscale
+    3 sqrt neg -2 moveto 3 sqrt neg 2 lineto 3 sqrt 0 lineto closepath teststroke
+grestore
+0 setgray
+4 softscale
+UrsaMajor
+

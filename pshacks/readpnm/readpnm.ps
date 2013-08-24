@@ -1,0 +1,125 @@
+%!
+% readpnm library by Denis Moskowitz.  All Rights Reversed - share and enjoy.
+/drawpnmdict 20 dict def
+/drawpnm_width { /width drawpnm } def
+    % draw a 1-unit wide pnm, unclipped, given a filename
+/drawpnm_height { /height drawpnm } def
+    % draw a 1-unit high pnm, unclipped, given a filename
+/drawpnm_square { /square drawpnm } def
+    % draw a pnm in the unit square, clipping as needed, given a filename
+/drawpnm_fit { /fit drawpnm } def
+    % draw a pnm in the unit square, shrinking to fit, given a filename
+/drawpnm {
+    % draw a ppm or pgm onto the page
+    % modes are square, width, or height
+    % pbm format differs from PS 1-bit format and cannot be easily supported
+    drawpnmdict begin
+	/mode exch def
+	/filename exch def
+	
+	% open file handle
+	/picfile filename (r) file def
+
+	% read image file preamble (such as "P6 100 100 255")
+	
+	% read P (ascii 80)
+	picfile read not {filename print (: read failure) print quit} if
+	80 ne {filename print (: bad format) print quit} if
+	% read magic number
+	picfile read not {filename print (: read failure) print quit} if
+	48 sub % convert to number
+
+	% deal with magic number
+	% only handle binary ppm  & pgm for now
+	/channels 0 def
+	dup 5 eq {/channels 1 def} if  %P5 = binary pgm grayscale
+	dup 6 eq {/channels 3 def} if  %P6 = binary ppm rgb
+	pop
+
+	% die if format unsupported
+	channels 0 eq {
+	    filename print (: unsupported magic number) print quit
+	} if 
+
+	% get width, height, range as ps tokens
+	/get_token { 
+	    picfile token not {filename print (: read failure) print quit} if
+	} def
+	get_token /width exch def
+	get_token /height exch def
+	get_token /range exch def
+
+	% after reading these tokens the file pointer should be at 
+	% the beginning of the image data
+
+	% calculate decode value
+	% this scales the image values to the 0-255 range
+	/bits 8 def
+	/decode_max 2 bits exp 1 sub range div def
+	
+	% draw image
+	gsave  % we'll be translating and changing the color space
+	    mode /square eq {
+
+		% determine offset for clipping purposes
+		/side width height gt { height } { width } ifelse def
+		newpath
+		0 0 moveto 0 1 lineto 1 1 lineto 1 0 lineto closepath clip
+		newpath
+
+		% show center of image
+		width side sub 2 div side div neg
+		height side sub 2 div side div 
+		translate
+	    } if
+	    mode /fit eq {
+
+		% determine offset for clipping purposes
+		/side width height lt { height } { width } ifelse def
+		newpath
+		0 0 moveto 0 1 lineto 1 1 lineto 1 0 lineto closepath clip
+		newpath
+
+		% show center of image
+		width side sub 2 div side div neg
+		height side sub 2 div side div 
+		translate
+	    } if
+	    mode /width eq {
+		% use width as side, align with y=0
+		/side width def
+		0 height side div 1 sub translate
+	    } if
+	    mode /height eq {
+		/side height def
+	    } if
+
+	    % select correct color space
+	    channels 3 eq { 
+		/DeviceRGB setcolorspace 
+		/Decode [0 decode_max 0 decode_max 0 decode_max] def
+	    } if
+	    channels 1 eq {
+		/DeviceGray setcolorspace 
+		/Decode [0 decode_max] def
+	    } if
+
+	    % image dictionary argument for image operator
+	    <<
+		/ImageType 1
+		/Width width
+		/Height height
+		/BitsPerComponent 8
+		/Decode Decode
+		/ImageMatrix [side 0 0 side neg 0 side]
+		/DataSource picfile
+	    >>
+	    image
+	grestore
+
+	% close file
+	picfile closefile
+    end
+} def
+
+

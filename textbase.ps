@@ -1,0 +1,186 @@
+%!
+% my text handling routines
+
+/ConcatDict 3 dict def
+/concatenate {
+    ConcatDict begin
+        /string2 exch def
+        /string1 exch def
+        /return_string string1 length string2 length add string def
+        return_string 0 string1 putinterval
+        return_string string1 length string2 putinterval
+        return_string
+    end
+} def
+
+/layout_dict 10 dict def
+/center_base_show { % keep existing baseline, center horizontally
+    dup stringwidth pop -2 div 0 moveto show
+} def
+
+/right_base_show { % show with right edge at 0, existing baseline
+    dup stringwidth pop neg 0 moveto show
+} def
+
+/left_base_show { 0 0 moveto show } def
+
+layout_dict begin
+    /letter_v_center {
+        /letter arg
+        gsave
+            newpath
+            0 0 moveto
+            letter true charpath pathbbox
+        grestore
+        exch pop add 2 div exch pop
+        neg 0 exch translate
+    } def
+end
+/X_center {
+    layout_dict begin
+        (X) letter_v_center
+    end
+} def
+
+/x_center {
+    layout_dict begin
+        (x) letter_v_center
+    end
+} def
+
+/Xj_center {
+    layout_dict begin
+        (Xj) letter_v_center
+    end
+} def
+
+/width_line_show {
+    % show string in width, compressing if needed
+    layout_dict begin
+	/show_func arg
+	/linewidth arg
+	/line arg
+	gsave
+	    line stringwidth pop linewidth gt {
+		line stringwidth pop linewidth exch div 1 scale
+	    } if
+	    line show_func
+	grestore
+    end
+} def
+
+/overflow_style /compress def
+
+/paragraph_show {
+    % show paragraph, wrapping lines and compressing long words
+    % return number of lines used
+    layout_dict begin
+        /compress true def
+        /show_func arg
+        /lineheight arg
+        /linewidth arg
+        /paragraph arg
+        /linesused 0 def
+	overflow_style /compress eq {
+	    /internal_show 
+	    {
+		gsave
+		    dup stringwidth pop linewidth gt {
+			dup stringwidth pop linewidth exch div 1 scale
+		    } if
+		    show_func
+		grestore
+	    } def
+	} { 
+	    { show_func } def
+	} ifelse
+        gsave
+	    % look for newlines
+	    {
+		paragraph (\n) search
+		{
+		    % newline found
+		    /subparagraph exch def
+		    pop
+		    /paragraph exch def
+		} {
+		    /subparagraph exch def
+		    /paragraph () def
+		} ifelse
+		/line_buffer () def
+		% look for spaces
+		{
+		    subparagraph ( ) search
+		    {
+			% space found
+			/new_word exch def
+			pop % space
+			/subparagraph exch def
+		    } {
+			% no space found
+			/new_word exch def
+			/subparagraph () def
+		    } ifelse
+		    line_buffer length 0 gt {
+			line_buffer ( ) concatenate
+		    } {
+			line_buffer
+		    } ifelse
+		    new_word concatenate
+		    dup stringwidth pop linewidth gt {
+			% new word makes it too long
+			pop
+			line_buffer length 0 gt {
+			    line_buffer internal_show
+			    0 lineheight neg translate
+			    /linesused linesused 1 add def
+			} if
+			/line_buffer new_word def
+		    }{
+			/line_buffer exch def
+		    } ifelse
+		    subparagraph length 0 eq
+		    {
+			line_buffer internal_show
+			/linesused linesused 1 add def
+			0 lineheight neg translate
+			exit
+		    } if
+		} loop
+		paragraph length 0 eq {
+		    exit
+		}{
+		} ifelse
+	    } loop
+        grestore
+        linesused
+    end
+} def
+
+/change_encoding_dict 5 dict def
+% args:
+% existing fontname (like /Times),
+% encoding (like ISOLatin1Encoding)
+% new fontname (like /Times-ISO)
+% defines font in current dict
+/change_encoding {
+    change_encoding_dict begin
+	/newfont arg
+	/newencoding arg
+	/basefont arg
+
+	basefont findfont
+	dup length dict begin
+	    {
+		1 index /FID ne {def} {pop pop} ifelse
+	    } forall
+	    /Encoding newencoding def
+	    currentdict
+	end
+	newfont exch 
+    end
+
+    definefont
+
+} def
+

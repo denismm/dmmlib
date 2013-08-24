@@ -1,0 +1,424 @@
+% polar & spherical coordinates, and great circle paths
+
+% p prefix = polar coords and polar lines: r theta pmoveto
+% s prefix = spherical coords and great-circle paths : lat long slineto
+% both of above rendered in polar
+
+% m prefix = as s but rendered in plate carree projection (for texturemaps).  
+% Location of 180-crossing lines is unpredictable.
+
+% c prefix = cartesian coords on the unit sphere [x y z]
+
+
+/atan_dict 2 dict def
+/myatan {
+    atan_dict begin
+	/x arg
+	/y arg
+	y 0 eq x 0 eq and { 0 } { y x atan } ifelse
+    end
+} def
+
+/polar_dict 9 dict def
+/polar {
+    polar_dict begin
+        /theta arg
+        /radius arg
+        theta cos radius mul
+        theta sin radius mul
+    end
+} def
+/ralop {
+    polar_dict begin
+        /y arg
+        /x arg
+	x dup mul y dup mul add sqrt
+	y x myatan
+    end
+} def
+
+/pmoveto { polar moveto } def
+
+/ptranslate { polar translate } def
+
+/node {
+    gsave
+        currentpoint translate
+        newpath 0 0 currentlinewidth 1.5 mul 0 360 arc closepath fill
+    grestore
+} def
+
+/pnode { gsave pmoveto node grestore } def
+
+/segments 100 def
+/polar_spline_mode false def
+/firstr_mode false def
+/set_polar_spline_mode { /polar_spline_mode arg } def
+/plineto {
+    polar_dict begin
+        /newt arg
+        /newr arg
+
+	currentpoint ralop
+	/oldt arg
+	/oldr arg
+
+        newt oldt sub 360 div 0.5 add floor -360 mul newt add /newt exch def
+	oldr 0 eq newr 0 eq or newt oldt eq or {
+	    newr newt polar lineto
+	} {
+	    % if not straight line
+	    polar_spline_mode {
+		% if spline mode
+		/angle_span  newt oldt sub def
+		/height_span newr oldr sub def
+		/theta angle_span 2 div def
+		/arc_offset 1 theta cos sub theta sin div 0.75 div def
+		% arc_offset is positive if newt > oldt
+		/line_offset height_span 3 div def
+		% line_offset is positive if newr > oldr
+		/firstr oldr def /secondr newr def
+		
+		%current point is oldt, oldr
+		%first control point
+		currentpoint exch % y0 x0
+		oldt sin arc_offset mul firstr mul sub
+		oldt cos line_offset firstr oldr div mul mul add
+		exch % x1 y0
+		oldt cos arc_offset mul firstr mul add
+		oldt sin line_offset firstr oldr div mul mul add % x1 y1
+
+		%second control point
+		newr newt polar exch % y3 x3
+		newt sin arc_offset mul secondr mul add
+		newt cos line_offset secondr newr div mul mul sub
+		exch % x2 y3
+		newt cos arc_offset mul secondr mul sub
+		newt sin line_offset secondr newr div mul mul sub % x2 y2
+
+		% third control point
+		newr newt polar
+
+		curveto
+	    } {
+		% if not spline mode
+		oldr newr eq {
+		   0 0 oldr oldt newt
+		   newt oldt gt { arc } { arcn } ifelse
+		} {
+		    % if not simple arc
+		    1 segments div dup 1 {
+			/fraction exch def
+			oldr newr oldr sub fraction mul add
+			oldt newt oldt sub fraction mul add
+			polar lineto
+		    } for
+		} ifelse % simple arc?
+	    } ifelse % straight line?
+	} ifelse % spline mode?
+    end
+} def
+
+/pgoto { curr_path {plineto} {pmoveto} ifelse } def
+
+/s2p {  % spherical to polar
+    exch 90 add exch
+} def
+
+/p2s {  % polar to spherical
+    exch 90 sub exch
+} def
+
+/vector_dict 20 dict def
+/s2c {  % spherical to cartesian
+    vector_dict begin
+	/long arg
+	/lat arg
+	/x lat cos long cos mul def
+	/y lat sin def
+	/z lat cos long sin mul def
+	[x y z]
+    end
+} def
+
+/c2s { % cartesian to spherical
+    vector_dict begin
+	aload pop
+	/z arg /y arg /x arg
+	/r2 x dup mul z dup mul add sqrt def  % radius in x-y plane
+	/lat y r2 myatan def
+	/long z x myatan def
+	lat 180 gt {
+	    /lat lat 360 sub def
+	} if
+	lat long
+    end
+} def
+
+/vcross {  % takes cartesian [x y z] args, A X B = C
+    vector_dict begin
+	/A arg
+	/B arg
+	/C [0 0 0] def
+	0 1 2 {
+	    /k exch def
+	    /i k 1 add 3 mod def
+	    /j i 1 add 3 mod def
+	    C k
+		A i get B j get mul
+		A j get B i get mul sub
+	    put
+	} for
+	C
+    end
+} def
+
+/vlength {
+    aload pop
+    3 {
+	dup mul 3 1 roll
+    } repeat
+    add add
+} def
+
+/vsmul { % multiply vector by scalar
+    vector_dict begin
+	/scalar arg
+	aload pop
+	3 {
+	    scalar mul 3 1 roll
+	} repeat
+	3 array astore
+    end
+} def
+/vsdiv { 1 exch div vsmul } def
+/vnorm {dup vlength vsdiv } def
+/vmtransform { % transform vector with matrix
+    vector_dict begin
+	/trans_M arg % 3x3 matrix
+	/trans_A arg % cartesian
+	/trans_out [0 0 0] def
+	0 1 2 {
+	    /i arg
+	    0 1 2 {
+		/j arg
+		trans_out j get
+		trans_A i get
+		trans_M i get j get
+		mul
+		add
+		trans_out exch j exch put
+	    } for
+	} for
+	trans_out
+    end
+} def
+/minvert {
+    vector_dict begin
+	/M_in arg % 3x3 matrix
+	/M_out 3 array def
+	0 1 2 {
+	    /i arg
+	    /row 3 array def
+	    0 1 2 {
+		/j arg
+		row j M_in j get i get put
+	    } for
+	    M_out i row put
+	} for
+	M_out
+    end
+} def
+/mmconcat {
+    vector_dict begin
+	/M2 arg
+	/M1 arg
+	/M_out 3 array def
+	0 1 2 {
+	    /i arg
+	    /row 3 array def
+	    0 1 2 {
+		/j arg
+		/cell 0 def
+		0 1 2 {
+		    /k arg
+		    cell 
+			M1 i get k get 
+			M2 k get j get mul 
+			add /cell arg
+		} for
+		row j cell put
+	    } for
+	    M_out i row put
+	} for
+	M_out
+    end
+} def
+
+/snode { s2p pnode } def
+/smoveto { s2p pmoveto } def
+/stranslate { s2p ptranslate } def
+
+/slineto_dict 5 dict def
+/slineto {
+    slineto_dict begin
+	% on stack: lat long
+	/newlong arg
+	/newlat arg
+	/newc newlat newlong s2c def
+	% current point
+	currentpoint ralop p2s
+	/oldlong arg
+	/oldlat arg
+	/oldc oldlat oldlong s2c def
+
+	% get shorter distance around
+	newlong oldlong sub 360 div 0.5 add floor -360 mul newlong add 
+	/newlong exch def
+
+	% check for zero
+	newlong oldlong ne newlat oldlat ne or {
+	    % find normal vector
+	    /normc newc oldc vcross vnorm def
+
+	    1 segments div dup 1 {
+		% find point on polar line
+		/fraction exch def
+		oldlat newlat oldlat sub fraction mul add
+		oldlong newlong oldlong sub fraction mul add
+		% convert to cartesian, then cross with norm and cross back
+		s2c normc vcross vnorm normc exch vcross vnorm
+		% convert to polar and draw
+		c2s s2p polar lineto
+	    } for
+	} if
+    end
+} def
+
+/sgoto { curr_path {slineto} {smoveto} ifelse } def
+
+polar_dict /mside_thresh 50 put
+
+/m2s {
+    polar_dict begin
+	/lat arg
+	/long arg
+	lat -90 lt lat 90 gt or {
+	    lat long
+	    (Latitude out of bounds) die
+	} if
+
+	% set mside here - it is reset by mmoveto
+	mside 0 eq {
+	    long mside_thresh     gt { 
+		/mside  1 def 
+		/pos_thresh 360 mside_thresh sub def
+		/neg_thresh 0 mside_thresh sub def
+	    } if
+	    long mside_thresh neg lt { 
+		/mside -1 def 
+		/pos_thresh 0 mside_thresh add def
+		/neg_thresh -360 mside_thresh add def
+	    } if
+	} if
+	lat long
+    end
+} def
+/s2m { 
+    polar_dict begin
+	/long arg
+	/lat arg
+	% make high longitudes negative
+	long 180 gt {
+	    /long long 360 sub def
+	} if
+	% handle mside
+	mside  1 eq long mside_thresh neg lt and { 
+	    /long long 360 add def 
+	} if
+	mside -1 eq long mside_thresh     gt and { 
+	    /long long 360 sub def 
+	} if
+	long lat
+    end
+} def
+
+
+/mnode { node } def
+/mmoveto { 
+    % reset set mside and then set if appropriate
+    polar_dict begin
+	/mside 0 def
+	/pos_thresh 720 def
+	/neg_thresh -720 def
+    end
+    2 copy m2s pop pop
+
+    moveto
+} def
+/mtranslate { translate } def
+
+/mlineto_dict 5 dict def
+/mlineto {
+    mlineto_dict begin
+	m2s
+	% on stack: lat long
+	/newlong arg
+	/newlat arg
+	/newc newlat newlong s2c def
+	% current point
+	currentpoint m2s
+	/oldlong arg
+	/oldlat arg
+	/oldc oldlat oldlong s2c def
+
+	% side threshholds
+	/pos_thresh polar_dict /pos_thresh get def
+	/neg_thresh polar_dict /neg_thresh get def
+	/close_thresh polar_dict /mside_thresh get 2 div def
+
+	% get shorter distance around
+	newlong oldlong sub 360 div 0.5 add floor -360 mul newlong add 
+	/newlong exch def
+
+	% check for zero
+	newlong oldlong ne newlat oldlat ne or {
+	    % find normal vector
+	    /normc newc oldc vcross vnorm def
+
+	    % set previous point to old point
+	    oldlat oldlong s2m /oldy arg /oldx arg
+
+	    1 segments div dup 1 {
+		% find point on polar line
+		/fraction exch def
+		oldlat newlat oldlat sub fraction mul add
+		oldlong newlong oldlong sub fraction mul add
+
+		% convert to cartesian, then cross with norm and cross back
+		s2c normc vcross vnorm normc exch vcross vnorm
+
+		% convert to map coords 
+		c2s s2m /newy arg /newx arg
+
+		% check for thresh-crossing
+		% newx neg_thresh sub close_thresh 2 div lt
+		% pos_thresh oldx sub close_thresh 2 div lt and 
+		oldx newx sub abs 270 gt
+		{
+		    /poley oldy oldy abs div 90 mul def
+		    oldx poley lineto
+		    newx poley lineto
+		} if
+		/oldx newx def
+		/oldy newy def
+
+		% draw
+		newx newy lineto
+	    } for
+	} if
+    end
+} def
+
+/mgoto { curr_path {mlineto} {mmoveto} ifelse } def
+

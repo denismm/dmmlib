@@ -1,0 +1,35 @@
+%!
+(dmmlib/object.ps) run
+(dmmlib/lines.ps) run
+
+72 softscale
+4.25 5.5 translate
+
+/smileyscale 0.125 def
+/Smiley {
+    gsave
+        smileyscale 2 div softscale
+        -1 -1 1 1 box stroke
+        0.33 0.33 dot
+        -0.33 0.33 dot
+        0 0 0.5 180 360 arc stroke
+    grestore
+} def
+
+0 0 3 circle 
+gsave stroke grestore
+% 1 1 /Smiley ObjectFill
+45 rotate
+
+smileyscale dup 4 {
+    smileyscale 2 div softscale 
+    4 thicken
+    0.75 softscale
+    -1 1 goto
+    1 1 goto
+    1 -1 goto
+    % -1 -1 2 0 90 sparc
+    % 0 0 1 -45 135 sparc
+    brushystroke
+} FractalFill
+

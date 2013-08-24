@@ -1,0 +1,46 @@
+%!
+(base.ps) run
+(lines.ps) run
+
+% svgarc: draw elliptical arc with SVG-style arguments
+% xrad yrad xrot large sweep nx ny
+% start point at currentpoint, end point at nx,ny
+% radii of ellipse is xrad, yrad
+% angle of ellipse x-axis is xrot
+% arc counterclockwise if sweep is 1, else clockwise
+% large arc if large is 1
+
+% rsvgarc: nx/ny is relative
+% svgsparc: use spline arcs, two if large
+% rsvgsparc: both of above
+72 softscale
+
+% arcs and angles
+gsave
+    0 10 translate
+    8.5 1100 div softscale
+    3 thicken
+    50 -200 goto 100 50 0 0 1 250 -50 rsvgsparc brushystroke
+    400 -100 goto 100 50 -30 0 1 250 -50 rsvgsparc brushystroke
+    400 -300 goto 100 50 -45 0 1 250 -50 rsvgsparc brushystroke
+    750 -200 goto 100 50 -135 0 1 250 -50 rsvgsparc brushystroke
+grestore
+gsave
+    0 7 translate
+    8.5 1100 div softscale
+    300 -50 goto 150 50 0 0 0 250 -50 rsvgarc stroke
+    300 -250 goto 150 50 0 0 1 250 -50 rsvgarc stroke
+    700 -50 goto 150 50 0 1 0 250 -50 rsvgarc stroke
+    700 -250 goto 150 50 0 1 1 250 -50 rsvgarc stroke
+grestore
+gsave
+    0 3 translate
+    1 0 goto 2 2 0 0 1 1 -2 svgarc stroke
+    3 thicken
+    3 0 goto 2 2 0 0 1 3 -2 svgsparc brushystroke
+    4 0 goto 1 1.25 0 0 1 4 -2 svgsparc brushystroke
+    5 0 goto 1 1.25 0 1 1 5 -2 svgsparc brushystroke
+grestore
+
+
+showpage

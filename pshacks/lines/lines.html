@@ -1,0 +1,238 @@
+<html>
+<head>
+<title>Alternate line styles in PostScript</title>
+</head>
+<body>
+<h1>Alternate line styles in PostScript</h1>
+<ul>
+    <li><a href="lines.ps">lines.ps library</a></li>
+    <li><a href="lines.ps.txt">lines.ps named as a text file</a></li>
+</ul>
+<p>
+PostScript gives you the ability to step through the current path and
+execute arbitrary code, processing the steps of the path.  (In the
+PostScript Language Tutorial and Cookbook, this is used to
+set text along a path.)  I have written code to do two kinds of varying-width
+lines: a tapering line and a pseudo-calligraphic line.
+</p>
+<h2>var_line and bolt</h2>
+<p>
+The <strong>var_line</strong> function consumes the current path and 
+replaces it with a path
+that outlines a variable-width line along that path.  It also does a small
+amount of filtering on the points - specifically, it ignores any line segment
+whose length is less than 1/10 the current line width.  (This removes some
+artifacts that appear when a short line is used to join very close points.)
+It takes a function that determines the "line radius"
+(half the desired line thickness) based on a number of internal variables.
+</p>
+<table align="right">
+<tr><td><img src="Lightning.png"/></td><td><img src="Flame.png"/></td></tr>
+</table>
+<p>
+As an example, the <strong>bolt</strong> function simply calls 
+<strong>var_line</strong> with a particular function:
+<pre>
+/bolt {
+    { 
+	dist linelen div 1 exch sub 
+	currentlinewidth mul 2 div 
+    } var_line
+} def
+</pre>
+This sets the line radius of the line to half the current line width
+times the proportion of the line left to be drawn, moving evenly from
+the full thickness at the beginning of the line to zero at the end.  This
+creates a "bolt of lightning", "horn" or "flame" effect.  The 
+<strong>boltstroke</strong>
+function just fills that <strong>bolt</strong> outline, making it a drop-in replacement
+for the built-in <strong>stroke</strong> operator.
+</p>
+<img src="Joins.png" align="left"/> 
+<p>
+For sharp points, a miter is created, keeping the actual line thickness
+approximately correct.  The linecap, linejoin, and miterlimit settings 
+are respected as in a normal PostScript stroke operation.   (The image on the 
+left depicts a <strong>boltstroke</strong> junction with linejoin set to 0, 1, and 2.)  The
+<strong>flattenpath</strong> operator is called on the path before analysis,
+turning arcs and curves into series of small straight lines.
+</p>
+<img src="Bipoint.png" align="right">
+<p>
+Using other functions produce different kinds of lines.  The 
+<strong>bipoint</strong> function calls <strong>var_line</strong> with a different function:
+<pre>
+/bipoint {
+    {
+	i 0 eq i pathcount 1 sub eq or 
+	{0} {currentlinewidth 2 div} ifelse
+    } var_line
+} def
+</pre>
+This sets the line radius to 0 at the first and last point and the natural
+line thickness everywhere else.  This draws a very thin line if there are
+only two points in the path.  (A <strong>bipointstroke</strong> function
+is also provided.)
+</p>
+<p>
+Currently, <strong>var_line</strong> has two limitation to the paths it handles: it will 
+<strong>quit</strong> if there is more than one moveto in the path, and
+it will behave unpredictably if the path goes directly back on itself
+(two segments meeting at a 0-degree angle).
+</p>
+<h2>calligraphic</h2>
+<table align="right"><tr>
+<td><img src="Calligraph.png"/></td>
+<td><img src="Calligraph2.png"/></td>
+</tr></table>
+<p>
+The <strong>calligraphic</strong> function works very similarly to the <strong>var_line</strong> function: it consumes the path and replaces it with an outline.  In this case,
+the outline is of a path that is full-width at junction points and becomes
+thinner in between.  Like <strong>var_line</strong>, 
+<strong>calligraphic</strong> supports the linecap, 
+linejoin, and miterlimit settings.  The function takes one argument, 
+spline_offset, which controls the thickness of the intermediate line.  
+The actual thickness is complicated to predict but for straight lines, 
+the minimum thickness is 1/4 plus 3/4 of the spline_offset, as in the 
+table below.
+</p>
+<table align="left" style="border: 1px solid red; margin: 0.5em">
+<tr><td><img src="CalliThick.png"/></td>
+</tr><tr>
+<td>
+<table>
+<tr><td align="center">offset</td><td>:</td><td>thickness</td></tr>
+<tr><td align="center">0</td><td>:</td><td align="center">1/4</td></tr>
+<tr><td align="center">1/3</td><td>:</td><td align="center">1/2</td></tr>
+<tr><td align="center">2/3</td><td>:</td><td align="center">3/4</td></tr>
+</table>
+</td>
+</tr>
+</table>
+<p>
+I also provide a <strong>callistroke</strong> function, which takes the
+same spline_offset argument, calls <strong>calligraphic</strong>, and fills the resulting
+path.  As a convenience, I also define <strong>spindly</strong> and
+<strong>spindlystroke</strong>, which call <strong>calligraphic</strong>
+and <strong>callistroke</strong> with an argument of 0, and 
+<strong>brushy</strong> and <strong>brushystroke</strong> which call 
+them with an argument of 1/3.
+The <strong>spindlystroke</strong> and <strong>brushystroke</strong> 
+functions are drop-in replacements for
+<strong>stroke</strong>.
+</p>
+<br style="line-height: 0em" clear="right"/>
+<img align="right" src="CalliExp.png"/>
+<p>
+The edges of the line are actually drawn as a spline.  The start and end
+points are calculated as in <strong>var_line</strong>, including miters, bevels, and curved
+joins as appropriate.  The control points are at 1/3 of the length of the
+line segment, and are spline_offset times the line radius away from the line.
+</p>
+<p>
+Unlike <strong>var_line</strong>, <strong>calligraphic</strong> does not flatten the path before analysis.
+It handles curves and splines (and in fact converts straight lines to splines
+during analysis).  Control point positions are offset by spline_offset and
+mitered as if the spline was a set of straight lines.
+</p>
+<br style="line-height: 0em" clear="right"/>
+<h3>A brief diversion regarding arcs</h3>
+<table align="right">
+<tr><td><img src="ArcSparc.png"/></td>
+<td><img src="BadSparc.png"/></td></tr>
+</table>
+<p>
+PostScript internally converts all arcs into splines.  Specifically, it
+creates a spline that goes from the starting point of the arc to the first
+angle that is divisible from 90, then appends 90-degree splines until it is less
+than 90 degrees from the ending point, then adds a final spline to the ending
+point.
+</p>
+<p>
+When using <strong>calligraphic</strong>, I want more control over the starting and ending
+points, so I added the <strong>sparc</strong> and <strong>sparcn</strong>
+functions, which are drop-in replacements for <strong>arc</strong> and 
+<strong>arcn</strong>.  These calculate the single spline that most closely
+resembles the arc and adds that spline to the path.  In the first image on 
+the right, the gray semicircle is a PostScript <strong>arc</strong> and 
+the black semicircle is a 180-degree <strong>sparc</strong>.
+</p>
+<p>
+Splines for arcs less 
+than 45 degrees are almost indistinguishable from actual arcs.  As they get
+larger, they become slightly less round.  A 180-degree arc's spline is 
+noticeably but not tremendously squared off.  Splines for arcs larger than
+that look less and less like arcs.  (In my own work I've avoided any arcs
+larger than 360, breaking them at intermediate angles.)
+</p>
+<p>
+The <strong>sparc</strong> and <strong>sparcn</strong> functions also 
+include the feature from <strong>arc</strong> and <strong>arcn</strong> 
+that automatically jumps to the starting point of the curve - if there is 
+a current point, a <strong>lineto</strong> will 
+precede the spline, and if not a <strong>moveto</strong> will precede it.
+</p>
+<table align="left">
+<tr>
+<td><img src="DProblem.png"/></td>
+<td><img src="DSolution.png"/></td>
+</tr>
+</table>
+<h3>calligraphic pitfalls</h3>
+<p>
+There are a number of pitfalls in using <strong>calligraphic</strong>.  For one, since the 
+start and end points of each side of a curved line are offset based on the 
+direction of the previous and next lines,  the thickness of the center of 
+a curved line may be thinner or thicker than expected.  In some cases,
+the two sides of the line may even cross.  The best way I have 
+found of mitigating this is to split long arcs into shorter arcs, when that 
+is artistically acceptable.  This applies to other curves as well.
+</p>
+<img src="Arrows.png" align="right"/>
+<p>
+Since <strong>calligraphic</strong> lines are thinner, sometimes shapes that look good with
+a fixed-width stroke will look wrong with <strong>calligraphic</strong>.  I have noticed
+this especially with arrows - often, the points of the main line will poke
+through the edges of the arrow.  Cases like this have to be fixed manually,
+by moving the endpoint of the main line back out of the arrow slightly.
+</p>
+<p>
+The <strong>calligraphic</strong> function has the same two limitations as <strong>var_line</strong>: it will 
+<strong>quit</strong> if there is more than one moveto in the path, and
+it will behave unpredictably if the path goes directly back on itself
+(two segments meeting at a 0-degree angle).
+</p>
+<br style="line-height: 0em" clear="left"/>
+<img src="Outline.png" align="left"/>
+<h2>Other functions provided</h2>
+For each of the -stroke functions mentioned, I've also provided a 
+-outline function (<strong>boltoutline</strong>, 
+<strong>callioutline</strong>, etc.) which draws the outline of the
+new path.  These functions take an additional argument before any base
+arguments, which specifies the line width of the outline.  These outlines
+may contain some interior lines in the case of bevels or curved joins.
+<p>
+</p>
+<h2>Examples</h2>
+<p>
+In addition to the illustrations on this page, I've used these functions
+in some other work.
+</p>
+<ul>
+    <li>I used <strong>bolt</strong> and <strong>bipoint</strong> to duplicate a 
+    <a href="/~dmm/graphics/omg/circles.html">magic circle from "Oh My
+    Goddess!"</a> - it's the seventh circle on that page.</li>
+    <li>I rendered my <a href="/~dmm/astro/constellations.html">New
+    Constellation Symbols</a> (and the old ones) with <strong>calligraphic</strong>.</li>
+</ul>
+<h2>Share and Enjoy</h2>
+<p>
+Please feel free to use this code however you like.
+</p>
+<hr/>
+<address>
+This page, code, and images by <a href="/~dmm/">Denis Moskowitz</a>.
+First posted on August 24, 2008.
+</address>
+</body>
+</html>

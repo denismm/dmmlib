@@ -1,0 +1,96 @@
+%!
+
+/circle { 0 360 arc closepath } def
+
+
+/dot { currentlinewidth 1.5 mul circle fill } def
+
+/lcurveto_dict 8 dict def
+/lcurveto {
+    lcurveto_dict begin
+        /y3 exch def /x3 exch def
+        /y2 exch def /x2 exch def
+        /y1 exch def /x1 exch def
+        x1 y1 lineto x2 y2 lineto x3 y3 lineto
+    end
+} def
+/pcurveto {
+    lcurveto_dict begin
+        /y3 exch def /x3 exch def
+        /y2 exch def /x2 exch def
+        /y1 exch def /x1 exch def
+        currentpoint /y0 exch def /x0 exch def
+        gsave
+            1 0 0 setrgbcolor
+            newpath
+            x0 y0 dot
+            x1 y1 dot
+            x2 y2 dot
+            x3 y3 dot
+        grestore
+        x1 y1 x2 y2 x3 y3 curveto
+    end
+} def
+
+
+% ellipse library
+/ellipsedict 9 dict def
+ellipsedict /mtrx matrix put
+/ell {
+        ellipsedict begin
+        /endangle exch def
+        /startangle exch def
+        /yrad exch def
+        /xrad exch def
+        /y exch def
+        /x exch def
+        /savematrix mtrx currentmatrix def
+        x y translate
+        xrad yrad scale
+        0 0 1 startangle endangle arc
+        savematrix setmatrix
+        end
+} def
+
+/softscale {
+    dup dup scale
+    1 exch div thicken
+} def
+
+/thicken {
+    currentlinewidth mul setlinewidth
+} def
+
+/boxdict 4 dict def
+/box {
+    boxdict begin
+        /t exch def
+        /r exch def
+        /b exch def
+        /l exch def
+        l b moveto r b lineto r t lineto l t lineto closepath
+    end
+} def
+
+
+%%EndProlog
+72 softscale
+4.25 5.5 translate
+0.125 setlinewidth
+3 softscale
+0 1 0 setrgbcolor
+0 0.5 90 {
+    gsave
+	rotate
+	1 0 currentlinewidth 2 div circle fill
+    grestore
+} for
+0 setgray
+0.5 thicken
+/a 0.55 def
+/a 2 sqrt 1 sub 0.75 div def
+1 0 moveto
+1 a a 1 0 1 pcurveto
+stroke
+showpage
+
