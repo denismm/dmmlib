@@ -14,17 +14,18 @@
         /right arg
         /bottom arg
         /left arg
-        /x_center left right add 2 div def
-        /y_center top bottom add 2 div def
-        /x_steps right x_center sub x_separation div ceiling def
-        /y_steps top y_center sub y_separation div ceiling def
+        /x_start left x_separation div floor def
+        /x_end right x_separation div ceiling def
 
-        y_steps -1 y_steps neg {
+        /y_start bottom y_separation div floor def
+        /y_end top y_separation div ceiling def
+        
+        y_start 1 y_end {
             /j arg
-            x_steps neg 1 x_steps {
+            x_start 1 x_end {
                 /i arg
-                /x_attempt x_center i x_separation mul add def
-                /y_attempt y_center j y_separation mul add def
+                /x_attempt i x_separation mul def
+                /y_attempt j y_separation mul def
                 x_attempt y_attempt infill {
                     gsave
                         newpath
@@ -49,17 +50,17 @@
         /right arg
         /bottom arg
         /left arg
-        /x_center left right add 2 div def
-        /y_center top bottom add 2 div def
-        /x_steps right x_center sub x_separation div ceiling def
-        /y_steps top y_center sub y_separation div ceiling def
-        
+        /x_start left x_separation div floor def
+        /x_end right x_separation div ceiling def
+
+        /y_start bottom y_separation div floor def
+        /y_end top y_separation div ceiling def
 
         /step_transform {
             /y_step arg
             /x_step arg
-            x_center x_step x_separation mul add
-            y_center y_step y_separation mul add
+            x_step x_separation mul
+            y_step y_separation mul
         } def
 
         /make_key {
@@ -80,9 +81,9 @@
 
         /points 10 dict def
 
-        y_steps -1 y_steps neg {
+        y_start 1 y_end {
             /j arg
-            x_steps neg 1 x_steps {
+            x_start 1 x_end {
                 /i arg
                 i j step_transform infill {
                     points 
@@ -99,6 +100,10 @@
                     exit
                 } if
                 /biggerpoints 10 dict def
+                /big_x_start x_start 2 div floor def
+                /big_x_end x_end 2 div ceiling def
+                /big_y_start y_start 2 div floor def
+                /big_y_end y_end 2 div ceiling def
 
                 % look for larger groups
 
@@ -110,9 +115,9 @@
 
 
                 maxdepth 1 gt {
-                    y_steps 2 div floor dup neg exch 1 exch {
+                    big_y_start 1 big_y_end {
                         /big_j arg
-                        x_steps 2 div floor dup neg exch 1 exch {
+                        big_x_start 1 big_x_end {
                             /big_i arg
                             /success true def
                             offsets {
@@ -161,10 +166,14 @@
                     } ifelse
                 } forall
                 0.5 x_separation mul 0.5 y_separation mul translate
-                /x_center x_center 2 div def
-                /y_center y_center 2 div def
                 2 softscale
+
                 /points biggerpoints def
+                /x_start big_x_start def
+                /x_end big_x_end def
+                /y_start big_y_start def
+                /y_end big_y_end def
+
                 /maxdepth maxdepth 1 sub def
             } loop
         grestore

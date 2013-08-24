@@ -5,7 +5,7 @@
 72 softscale
 4.25 5.5 translate
 
-/smileyscale 0.125 def
+/smileyscale 2 recip def
 /Smiley {
     gsave
         smileyscale 2 div softscale
@@ -20,8 +20,12 @@
 gsave stroke grestore
 % 1 1 /Smiley ObjectFill
 45 rotate
+0.5 0.5 translate
 
-smileyscale dup 4 {
+
+smileyscale dup 
+4 
+{
     smileyscale 2 div softscale 
     4 thicken
     0.75 softscale
@@ -31,5 +35,6 @@ smileyscale dup 4 {
     % -1 -1 2 0 90 sparc
     % 0 0 1 -45 135 sparc
     brushystroke
-} FractalFill
+}
+FractalFill
 
