@@ -1,0 +1,281 @@
+%!
+(dmmlib/base.ps) run
+(dmmlib/lines.ps) run
+(dmmlib/textbase.ps) run
+(dmmlib/object.ps) run
+
+% Parse places, determine actual locations
+/Places PlaceList length dict def
+PlaceList {
+    /Place arg
+    Place 0 get /PlaceName arg
+    Place 1 get /PlaceData arg
+    PlaceData 0 get dup type /nametype eq {
+        /SourcePlace arg PlaceData 1 get aload pop /Direction arg /Distance arg
+        Places SourcePlace get /SourceData arg
+        SourceData 0 get /SourceX arg
+        SourceData 1 get /SourceY arg
+        PlaceData 0 SourceX Direction cos Distance mul add put
+        PlaceData 1 SourceY Direction sin Distance mul add put
+    } { pop } ifelse
+    Places PlaceName PlaceData put
+} forall
+
+% Determine size based on 'size'
+/default_place_radius 0.1 def
+/getradius where
+/getradius {
+    default_place_radius mul 
+} defaultdef
+
+/linethickness 0.05 defaultdef
+/linefontsize 0.085 defaultdef
+/linefont { /Helvetica findfont linefontsize scalefont setfont } defaultdef
+/linefontup linefontsize linethickness add 2 div defaultdef
+
+% Draw label on given line
+/linelabelshow {
+    /linelength arg
+    /label arg
+    /availablelength linelength default_place_radius linethickness add 2 mul sub def
+    X_center label availablelength {center_base_show} width_line_show
+} defaultdef
+
+% Draw label on line
+/drawlabels {
+    /linelength arg
+    /dataset arg
+    %write labels
+    gsave
+        0 setgray
+        linelength 2 div 0 translate
+        dataset 1 get dataset 2 get eq {
+            gsave
+                0 linefontup translate 
+                (\253 ) dataset 1 get concatenate ( \273) concatenate
+                linelength linelabelshow
+            grestore
+        } {
+            dataset 1 get length 0 gt {
+                gsave
+                    0 linefontup translate 
+                    (\253 ) dataset 1 get concatenate 
+                    linelength linelabelshow
+                grestore
+            } if
+            dataset 2 get length 0 gt {
+                gsave
+                    0 linefontup neg translate 
+                    dataset 2 get ( \273) concatenate 
+                    linelength linelabelshow
+                grestore
+            } if
+        } ifelse
+    grestore
+} defaultdef
+
+/namefontsize 1.25 defaultdef
+/namefont { /Palatino-Bold findfont namefontsize scalefont setfont } defaultdef
+
+% Draw name on object
+/nameshow {
+    /fullname arg
+    /oneline true def
+    fullname stringwidth pop 2 gt {
+        fullname ( ) search {
+            /first arg
+            pop
+            /last arg
+            /oneline false def
+            /lendiff
+                first stringwidth pop
+                last stringwidth pop sub abs
+            def
+            {
+                last ( ) search {
+                    first ( ) concatenate exch concatenate
+                    /newfirst arg
+                    pop
+                    /newlast arg
+                    /newlendiff
+                        newfirst stringwidth pop
+                        newlast stringwidth pop sub abs
+                    def
+                    newlendiff lendiff lt {
+                        /lendiff newlendiff def
+                        /first newfirst def
+                        /last newlast def
+                    } {
+                        exit
+                    } ifelse
+                } {
+                    pop exit
+                } ifelse
+            } loop
+        } {
+            pop
+        } ifelse
+    } if
+
+    X_center
+
+    oneline {
+        fullname 2 {center_base_show} width_line_show
+    } {
+        0.5 softscale
+        0 1 translate
+        first 4 {center_base_show} width_line_show
+        0 -1.25 translate
+        last 4 {center_base_show} width_line_show
+    } ifelse
+} defaultdef
+
+% general point retrieval
+/getpoint {
+    /pointname arg
+    /reaction <<
+        /nametype {
+            /point Places pointname get def
+            point 0 get point 1 get
+        }
+        /arraytype {
+            pointname 0 get dup type /nametype eq {
+                /SourcePlace arg 
+                pointname 1 get aload pop /Direction arg /Distance arg
+                Places SourcePlace get /SourceData arg
+                SourceData 0 get /SourceX arg
+                SourceData 1 get /SourceY arg
+                SourceX Direction cos Distance mul add
+                SourceY Direction sin Distance mul add 
+            } {
+                pointname 1 get
+            } ifelse
+        } 
+    >> def
+    pointname type dup reaction exch known {
+        reaction exch get exec
+    } {
+        pop die
+    } ifelse
+} def
+
+%%EndProlog
+
+/debug false defaultdef
+/Zoom /all defaultdef
+
+% start with 1-inch scale, origin in center, then zoom
+72 softscale
+4.25 5.5 translate
+ZoomList Zoom get aload pop rotate softscale translate 
+
+% draw grid if in debug mode
+% this should use region code
+debug {
+    0 0 0.125 circle stroke
+    Extent 0 get floor 1 Extent 2 get ceiling {
+        /x arg
+        Extent 1 get floor 1 Extent 3 get ceiling{
+            /y arg
+            x y dot
+        } for
+    } for
+} if
+
+% Draw regions
+linefont
+linethickness setlinewidth
+Regions {
+    gsave
+	/dataset arg
+	/regiontype dataset 0 get def
+        newpath
+        1 1 dataset length 1 sub {
+            /i arg
+            /points dataset i get def
+            points 0 get getpoint moveto
+            1 1 points length 1 sub {
+                points exch get
+                getpoint goto
+            } for
+            closepath
+        } for
+        debug {gsave stroke grestore } if
+        RegionTypes regiontype get exec
+    grestore
+} forall
+
+% Draw lines
+Connections {
+    gsave
+	/dataset arg
+        /traveltype dataset 0 get def
+
+        % draw line
+        newpath
+        1 1 dataset length 1 sub {
+            dataset exch get getpoint goto
+        } for
+        gsave
+            % line type
+            0 setgray
+            TravelTypes traveltype get exec
+        grestore
+        newpath
+    grestore
+} forall
+
+% Draw places
+namefont
+/placethickness 0.025 defaultdef
+placethickness setlinewidth
+Places {
+    /dataset arg        % x y area name type
+    /name arg
+    gsave
+	dataset 0 get 
+        dataset 1 get translate % x y
+
+        dataset 2 get getradius /placeradius arg
+	dataset 4 get           /placetype arg
+        gsave
+            % canonicalize to array
+            placetype type /arraytype ne {
+                /placetype [placetype] def
+            } if
+            PlaceModifiers /Default known {
+                PlaceModifiers /Default get exec
+            } if
+            0 1 placetype length 2 sub {
+                placetype exch get PlaceModifiers exch get exec
+            } for
+            placeradius softscale
+            gsave
+                placetype dup length 1 sub get
+                PlaceTypes exch get exec
+            grestore
+            /NamePlaces where {
+                pop
+                placetype dup length 1 sub get
+                NamePlaces exch known {
+                    dataset 3 get nameshow
+                } if
+            } 
+            {
+                dataset 3 get nameshow
+            } ifelse
+        grestore
+        % dataset length 5 gt {
+            % dataset 5 get {
+                % gsave
+                    % /subdata arg
+                    % subdata 0 get subdata 1 get translate
+                    % X_center subdata 2 get nameshow
+                % grestore
+            % } forall
+        % } if
+    grestore
+} forall
+
+showpage
+

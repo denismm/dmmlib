@@ -3,11 +3,43 @@
 /circle { 0 360 arc closepath } def
 
 /dot { currentlinewidth 1.5 mul circle fill } def
+/doot { 0 0 dot } def
 
 /arg { exch def } def
+
+% define if not known
+/defaultdef {
+    % name definition
+    exch
+    % definition name
+    dup where {
+        % definition name dict
+        pop pop pop
+    } {
+        % definition name
+        exch def
+    } ifelse
+} def
+
 /recip { 1 exch div } def
 /maximum { 2 copy gt { pop } { exch pop } ifelse } def
 /minimum { 2 copy lt { pop } { exch pop } ifelse } def
+
+% mod that accepts floats and makes negatives positive
+/mod_dict 2 dict def
+/mymod {
+    mod_dict begin
+        /modulus exch def
+        /original exch def
+        original 0 lt original modulus ge or {
+            original modulus div floor neg
+            modulus mul original add
+            /original exch def
+        } if
+        original
+    end
+} def
+
 
 /randint {rand exch mod} def
 
@@ -206,6 +238,7 @@ end
 /goto {
     curr_path {lineto} {moveto} ifelse
 } def
+/rgoto { rlineto } def
 
 /centershowdict 4 dict def
 /centershow {
@@ -227,16 +260,18 @@ end
 } def
 
 % use anonymous dictionary in case function contains circrepeat
-/circrepeat {
-    2 dict begin
+/schlafrepeat {
+    3 dict begin
     /cr_function arg
+    /cr_x arg
     /cr_n arg
     cr_n abs {
         cr_function
-        360 cr_n div rotate
+        360 cr_n div cr_x mul rotate
     } repeat
     end
 } def
+/circrepeat { 1 exch schlafrepeat } def
 
 /grayfill { gsave setgray fill grestore } def
 /rgbfill { gsave setrgbcolor fill grestore } def
@@ -393,4 +428,20 @@ end
     } repeat
     setrgbcolor
     pop
+} def
+
+% grid of dots in box given 
+/dotgrid {
+    /gridspacing arg
+    /gridright arg
+    /gridtop arg
+    /gridbottom arg
+    /gridleft arg
+    gridleft gridspacing gridright {
+        /gridx arg
+        gridbottom gridspacing gridtop {
+            /gridy arg
+            gridx gridy dot
+        } for
+    } for
 } def
