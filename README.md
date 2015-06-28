@@ -191,7 +191,7 @@ A library for drawing lines differently.  More information can be found at
 
 *num* **boltoutline** *--*
 
-> Replacement for **stroke** that calls var_line with a function that
+> Replacement for **stroke** that calls **var_line** with a function that
 > smoothly decreases linewidth to 0 along the line length.
 > **bolt** simply replaces
 > the current path with an outline of the new path.  **boltstroke** fills
@@ -201,7 +201,7 @@ A library for drawing lines differently.  More information can be found at
 
 **bipoint, bipointstroke, bipointoutline**
 
-> Replacement for **stroke** that calls var_line with a function that
+> Replacement for **stroke** that calls **var_line** with a function that
 > sets the linewidth to 0 at the start and end, leaving it alone otherwise.
 > The three operators follow the same pattern as **bolt** and family.
 
@@ -227,7 +227,7 @@ A library for drawing lines differently.  More information can be found at
 
 **brushy, brushystroke, brushyoutline**
 
-> Call calligraphic and family with arguments of 0 and 1/3 respectively,
+> Call **calligraphic** and family with arguments of 0 and 1/3 respectively,
 > creating lines of nominal 1/4 and 1/2 minimum thickness.  **brushystroke**
 > is the operator I use most often from this library.
 
@@ -251,6 +251,47 @@ A library for drawing lines differently.  More information can be found at
 > to right.
 
 ## textbase.ps
+Text manipulation and display functions.
+
+*string string* **concatenate** *string*
+
+> Concatenate two strings.  Not to be confused with the built-in operator
+> **concat** which combines matrices.
+
+**X_center, x_center, Xj_center**
+
+> **Translate** so as to put y=0 in the vertical center of future text 
+> in the current font.  The center is defined as the middle of X, x, or Xj
+> appropriately (capital, minuscule, capital plus descender).
+
+*string* **left_base_show** *--*
+
+*string* **right_base_show** *--*
+
+*string* **center_base_show** *--*
+
+> **Show** the string with a baseline at y=0.  The string will have its
+> left, right, or center at x=0.
+
+*string num proc* **width_line_show** *--*
+
+> Call the proc (which should be one of the **_base_show** family above or
+> similar) to show the string, using scale to compress the line horizontally
+> if necessary to keep it within the given width.
+
+*string linewidth lineheight proc* **paragraph_show** *lines*
+
+> **Show** the string formatted into a paragraph.  Wrap lines to
+> linewidth when possible.  Compress long words horizontally to
+> fit in the linewidth.  Drop lineheight units between lines.
+> Respect newlines.  Return the number of lines shown.
+
+*basefont encoding newfont* **change_encoding** *--*
+
+> Define a new version of *basefont* with the given encoding.
+
+> `/Times ISOLatin1Encoding /Times-ISO change_encoding`
+
 ## object.ps
 ## readpnm.ps
 ## polar.ps
