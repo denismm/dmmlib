@@ -106,14 +106,16 @@ These are math functions that I use often enough to not want to constantly rewri
 ( **elln, spell, spelln** )
 
 > Ellipse version of **arc** and **arcn**, based on code in the Blue Book.
-> The "sp" versions use the **sparc** operator from lines.ps.
+> The "sp" versions use the **sparc** operator from lines.ps and require
+> importing that file.
 
 *xrad yrad xrot large sweep nx ny* **svgarc** *--*
 ( **rsvgarc, svgsparc, rsvgsparc**)
 
 > Ellipses based on the arc method in SVG - see SVG documentation for
 > details.  The "r" prefix makes nx and ny relative to the current point.
-> The "sp" versions use the **sparc** operator from lines.ps.
+> The "sp" versions use the **sparc** operator from lines.ps and require
+> importing that file.
 
 *l b r t* **box** *--*
 
@@ -167,6 +169,87 @@ These are math functions that I use often enough to not want to constantly rewri
 
 
 ## lines.ps
+A library for drawing lines differently.  More information can be found at
+[Alternate line styles in Postscript](http://suberic.net/~dmm/graphics/lines/lines.html).
+
+*proc* **var_line** *--*
+
+> Replaces the current path, which can't contain internal **moveto** operators,
+> with an outline of a variable-width stroke of that path.
+> Respects linecap, linejoin, and miterlimit settings.
+> The proc must return half of the desired line thickness at every point 
+> (any point mentioned in
+> **moveto** or **lineto** after **flattenpath** is called to remove curves) 
+> based on internal variables in **var_line**.  Useful variables:
+
+*   i: position along the array of points
+*   pathcount: length of the array of points
+*   dist: current position along the length of the path
+*   linelen: length of the entire path
+
+**bolt, boltstroke**
+
+*num* **boltoutline** *--*
+
+> Replacement for **stroke** that calls var_line with a function that
+> smoothly decreases linewidth to 0 along the line length.
+> **bolt** simply replaces
+> the current path with an outline of the new path.  **boltstroke** fills
+> that path, making it a full replacement for stroke.  **boltoutline**
+> strokes the outline and takes an argument which is the thickness of the
+> outline.  The linewidth setting is not changed as a result of the call.
+
+**bipoint, bipointstroke, bipointoutline**
+
+> Replacement for **stroke** that calls var_line with a function that
+> sets the linewidth to 0 at the start and end, leaving it alone otherwise.
+> The three operators follow the same pattern as **bolt** and family.
+
+*spline_offset* **calligraphic** *--*
+
+> Replaces the current path, which can't contain internal **moveto** operators,
+> with an outline of a "calligraphic" stroke of that path.  This path
+> goes to full width at the endpoints of a **moveto**, **lineto**, or 
+> **curveto** operator, but gets thinner in between those points (including
+> along the path of a curve).  The argument determines how thick the
+> thin segments are, in a not easily describable way - 0 will make a straight
+> line get as thin as 1/4 the base thickness, 1 will look like a normal stroke
+> for straight lines.  See the lines.html web page for more details.
+
+*spline_offset* **callistroke** *--*
+
+*num spline_offset* **callistroke** *--*
+
+> **callistroke** fills the calligraphic outline, **callistroke** strokes it
+> as in the **bolt** family above.
+
+**spindly, spindlystroke, spindlyoutline**
+
+**brushy, brushystroke, brushyoutline**
+
+> Call calligraphic and family with arguments of 0 and 1/3 respectively,
+> creating lines of nominal 1/4 and 1/2 minimum thickness.  **brushystroke**
+> is the operator I use most often from this library.
+
+**sparc, sparcn**
+
+> Drop-in replacements for **arc** and **arcn** that draw a single spline for
+> the entire arc as opposed to breaking it every 90 degrees.  The curve
+> approximation is unnoticeable from 0 to 90 degrees, becomes slightly square
+> by 180 degrees, and quickly becomes obviously distorted above 180.
+
+*x y rad* **spcircle** *--*
+
+> Adds a circle to the path, like **circle** in base.ps, using sparc to draw
+> semicircles from 0 to 180 and from 180 to 360.
+
+*num proc* **ObjectLine** *--*
+
+> Strokes the current path by calling *proc* at the 0,0 point and then every
+> *num* units along it. *proc* should draw something centered at 0,0.  It
+> will be rotated to match the line, as if the line was traveling from left
+> to right.
+
 ## textbase.ps
 ## object.ps
 ## readpnm.ps
