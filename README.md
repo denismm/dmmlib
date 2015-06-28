@@ -134,7 +134,7 @@ These are math functions that I use often enough to not want to constantly rewri
 
 **shavepath**
 
-> Replaces the curent path with a new one that contains no small lines 
+> Replaces the current path with a new one that contains no small lines 
 > (where "small" means "less than 0.1 times the currentlinewidth").
 
 ### Painting Operators
