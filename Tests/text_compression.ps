@@ -1,0 +1,18 @@
+%!
+(dmmlib/base.ps) run
+(dmmlib/textbase.ps) run
+
+72 softscale
+/Times-Roman findfont setfont
+2 10 translate
+0.9 -0.025 .6 {
+    /i arg
+    i (       ) cvs ( ) concatenate right_base_show
+    gsave
+        i 1 scale
+        (abcdefghijklmnopqrstuvwxyz) left_base_show
+    grestore
+    0 -1 translate
+} for
+
+showpage
