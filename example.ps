@@ -1,17 +1,18 @@
 %!
 (dmmlib/base.ps) run
 (dmmlib/lines.ps) run
+(dmmlib/fill.ps) run
 72 softscale
 4.25 5.5 translate
 -3.5 dup dup neg dup 0.5 roundbox 0.75 grayfill stroke
 5 thicken
-7 {0 3 goto} circrepeat closepath whitefill spindlystroke
-0 0 2 circle 0.5 0.25 1 rgbfill brushystroke
+7 {0 3 goto} circrepeat closepath 0 0 0.5 100 gradientfill spindlystroke
+0 0 2 circle 1 0.25 0.5 rgbfill brushystroke
+1 1 dot
+-1 1 dot
 2 thicken
-0 0 1 0 180 sparc brushystroke
-0 0 goto
--0.5 -1 goto
-0.5 -1 goto
-0 -3 goto boltstroke
+0 0 1.25 0 180 sparcn brushystroke
+2.5 3 goto
+1 0 4 0 2.5 -3 curveto boltstroke
 showpage
 

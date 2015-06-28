@@ -188,18 +188,20 @@
 
 
 /gradientfill {
-    /gradient_step arg
-    /fill_color arg
+    /gradient_steps arg
+    /blue arg
+    /green arg
+    /red arg
     whitefill
     gsave
         clip
         1 setlinejoin
         pathsize 0.5 mul setlinewidth
-        1 gradient_step neg gradient_step {
+        1 gradient_steps recip dup neg exch {
             /i arg
             gsave
                 i thicken
-                fill_color setrgbcolor 1 i sub mul_lighten
+                red green blue setrgbcolor 1 i sub mul_lighten
                 stroke
             grestore
         } for
