@@ -285,7 +285,8 @@ Text manipulation and display functions.
 > **Show** the string formatted into a paragraph.  Wrap lines to
 > linewidth when possible.  Compress long words horizontally to
 > fit in the linewidth.  Drop lineheight units between lines.
-> Respect newlines.  Return the number of lines shown.
+> Respect newlines.  Return the number of lines shown.  Does not
+> change the current transformation matrix.
 
 *basefont encoding newfont* **change_encoding** *-*
 
