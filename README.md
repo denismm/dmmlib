@@ -232,6 +232,22 @@ A library for drawing lines differently.  More information can be found at
 > creating lines of nominal 1/4 and 1/2 minimum thickness.  **brushystroke**
 > is the operator I use most often from this library.
 
+**cstroke**
+
+> Defined to be equivalent to brushystroke but see next three methods.
+
+**setplain**
+
+> Define **cstroke** to be equivalent to **stroke**.
+
+**setbrushy**
+
+> Define **cstroke** to be equivalent to **brushystroke**.
+
+**setspindly**
+
+> Define **cstroke** to be equivalent to **spindlystroke**.
+
 **sparc, sparcn**
 
 > Drop-in replacements for **arc** and **arcn** that draw a single spline for
