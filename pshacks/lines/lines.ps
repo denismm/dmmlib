@@ -1,10 +1,10 @@
 %!
 
 /acos {
-    dup dup mul 1 exch sub sqrt atan
+    dup dup mul 1 exch sub sqrt exch atan
 } def
 /asin {
-    dup dup mul 1 exch sub sqrt exch atan
+    dup dup mul 1 exch sub sqrt atan
 } def
 
 % handle zeros
@@ -419,12 +419,12 @@ end
 	    /next_point pathpoints n get def
 	    /nx next_point 0 get def
 	    /ny next_point 1 get def
-	    /ndir ny y sub nx x sub myatan def
+	    /ndir ny y sub nx x sub atan def
 
 	    /last_point pathpoints l get def
 	    /lx last_point 0 get def
 	    /ly last_point 1 get def
-	    /ldir ly y sub lx x sub myatan def
+	    /ldir ly y sub lx x sub atan def
 	    
 	    /bevel false def
 	    /direction_2 0 def
@@ -466,6 +466,7 @@ end
 		% check miter limit - not for control points
 		0 currentlinejoin ne
 		lineout linerad zdiv currentmiterlimit gt or
+                theta 0 eq or
 		ptype /p eq and {
 		    /bevel true def
 		    /lineout linerad def
@@ -666,39 +667,44 @@ end
 } def
 
 /ObjectLineDict 15 dict def
+ObjectLineDict begin
+    /_ObjectLineto {
+        /ny arg /nx arg
+        /seglen ny oy sub dup mul nx ox sub dup mul add sqrt def
+        ol seglen add separation gt {
+            /steps ol seglen add separation div cvi def
+            1 1 steps
+            {
+                /i arg
+                /ratio separation i mul ol sub seglen div def
+                ratio 0 ne {
+                    gsave
+                        newpath
+                        ox oy translate
+                        nx ox sub ratio mul         % position from o
+                        ny oy sub ratio mul
+                        2 copy translate
+                        exch myatan rotate
+                        object
+                    grestore
+                } if
+            } for
+            /ol ol steps separation mul sub def
+        } if
+        /ox nx def /oy ny def /ol ol seglen add def
+    } def
+end
 /ObjectLine {
     ObjectLineDict begin
         /object arg
         /separation arg
         flattenpath
-        { /oy arg /ox arg /ol 0 def } %moveto
+        { /oy arg /ox arg /ol 0 def /cx ox def /cy oy def} %moveto
         {
-            /ny arg /nx arg
-            /seglen ny oy sub dup mul nx ox sub dup mul add sqrt def
-            ol seglen add separation gt {
-                /steps ol seglen add separation div cvi def
-                1 1 steps
-                {
-                    /i arg
-                    /ratio separation i mul ol sub seglen div def
-                    ratio 0 ne {
-                        gsave
-                            newpath
-                            ox oy translate
-                            nx ox sub ratio mul         % position from o
-                            ny oy sub ratio mul
-                            2 copy translate
-                            exch myatan rotate
-                            object
-                        grestore
-                    } if
-                } for
-                /ol ol steps separation mul sub def
-            } if
-            /ox nx def /oy ny def /ol ol seglen add def
+            _ObjectLineto
         } % lineto
         { die } % curveto
-        { die } % closepath
+        { cx cy _ObjectLineto } % closepath
         pathforall
     end
 } def
