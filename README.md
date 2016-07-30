@@ -37,6 +37,8 @@ These are math functions that I use often enough to not want to constantly rewri
 
 *int int* **minimum** *min*
 
+*int* **half** *int*
+
 *num num* **mymod** *remainder*
 
 > This is a non-integer-requiring mod that always returns a positive number.
@@ -70,6 +72,10 @@ These are math functions that I use often enough to not want to constantly rewri
 > Search for "Schl&auml;fli Symbol" for more details.
 
 > `/star {5 2 {0 2 goto} schlafrepeat closepath stroke } def`
+
+*proc* **hmirror** *-*
+
+> Takes a proc and runs it twice, once with a `-1 1 scale` in effect.
 
 ### File Operators
 

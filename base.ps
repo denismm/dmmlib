@@ -24,6 +24,7 @@
 /recip { 1 exch div } def
 /maximum { 2 copy gt { pop } { exch pop } ifelse } def
 /minimum { 2 copy lt { pop } { exch pop } ifelse } def
+/half { 2 div } def
 
 % mod that accepts floats and makes negatives positive
 /mod_dict 2 dict def
@@ -272,6 +273,18 @@ end
     end
 } def
 /circrepeat { 1 exch schlafrepeat } def
+
+% takes a proc, runs it on both sides
+/hmirror {
+    2 dict begin
+    /lr_function arg
+    -1 2 1 {
+        gsave
+            1 scale
+            lr_function
+        grestore
+    } for
+} def
 
 /grayfill { gsave setgray fill grestore } def
 /rgbfill { gsave setrgbcolor fill grestore } def
