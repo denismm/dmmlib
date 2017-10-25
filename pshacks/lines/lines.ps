@@ -46,6 +46,42 @@
 
 /boltdict 20 dict def
 
+
+/pathlength {
+    boltdict begin
+        gsave
+            flattenpath
+            /startx /None def
+            /starty /None def
+            /oldx /None def
+            /oldy /None def
+            /linelen 0 def
+            /handle_line {
+                /newy arg /newx arg
+                newx oldx sub dup mul
+                newy oldy sub dup mul
+                add sqrt linelen add /linelen exch def
+                /oldx newx def
+                /oldy newy def
+            } def
+            {
+                /starty arg
+                /startx arg
+                /oldy starty def
+                /oldx startx def
+            }
+            {
+                handle_line
+            }
+            { pop pop pop pop pop pop }
+            { startx starty handle_line}
+            pathforall
+        grestore
+        linelen
+    end
+} def
+
+
 boltdict begin
     /pathtolines {
 	% analyze current path, creating pathpoints array
@@ -231,131 +267,134 @@ end
 
 	pathtolines
 
-	% determine miter and bevel points and directions
-	0 1 pathcount 1 sub {
-	    /i exch def
-	    /l i 1 sub pathcount mymod cvi def
-	    /n i 1 add pathcount mymod cvi def
+        linelen 0 gt {
 
-	    /cur_point pathpoints i get def
-	    /x cur_point 0 get def
-	    /y cur_point 1 get def
-	    /dist cur_point 2 get def
+            % determine miter and bevel points and directions
+            0 1 pathcount 1 sub {
+                /i exch def
+                /l i 1 sub pathcount mymod cvi def
+                /n i 1 add pathcount mymod cvi def
 
-	    /next_point pathpoints n get def
-	    /nx next_point 0 get def
-	    /ny next_point 1 get def
-	    /ndir ny y sub nx x sub myatan def
+                /cur_point pathpoints i get def
+                /x cur_point 0 get def
+                /y cur_point 1 get def
+                /dist cur_point 2 get def
 
-	    /last_point pathpoints l get def
-	    /lx last_point 0 get def
-	    /ly last_point 1 get def
-	    /ldir ly y sub lx x sub myatan def
+                /next_point pathpoints n get def
+                /nx next_point 0 get def
+                /ny next_point 1 get def
+                /ndir ny y sub nx x sub myatan def
 
-	    /bevel false def
-	    /direction_2 0 def
+                /last_point pathpoints l get def
+                /lx last_point 0 get def
+                /ly last_point 1 get def
+                /ldir ly y sub lx x sub myatan def
 
-	    % effective line radius at this point
-	    /linerad radfunc exec def
+                /bevel false def
+                /direction_2 0 def
 
-	    i 0 eq i pathcount 1 sub eq or {
-		/lineout linerad def
-		i 0 eq {
-		    /direction ndir 90 add def
-		    currentlinecap 2 eq {
-			/x x ndir cos neg lineout mul add def
-			/y y ndir sin neg lineout mul add def
-		    } if
-		} {
-		    /direction ldir 90 sub def
-		    currentlinecap 2 eq {
-			/x x ldir cos neg lineout mul add def
-			/y y ldir sin neg lineout mul add def
-		    } if
-		} ifelse
-		/direction_2 direction def
-	    } {
-		/theta ndir ldir sub def
-		theta 0 lt {
-		    /theta theta 360 add def
-		} if
-		/phi 90 theta 2 div sub def
-		% actual distance to junction point
-		phi cos 0 eq {
-		    /lineout 0 def
-		} {
-		    /lineout linerad phi cos div def
-		} ifelse
-		% direction to junction point
-		/direction ndir 90 add phi add def
-		0 currentlinejoin ne
-		lineout linerad zdiv currentmiterlimit gt or {
-		    /bevel true def
-		    /lineout linerad def
-		    /direction ldir 90 sub 360 mymod def
-		    /direction_2 ndir 90 add 360 mymod def
-		    i pathcount 1 sub eq {
-			/bevel false def
-		    } if
-		} {
-		    /direction_2 direction def
-		} ifelse
-	    } ifelse
-	    pathpoints i [x y dist /l direction lineout bevel direction_2] put
-	} for
+                % effective line radius at this point
+                /linerad radfunc exec def
 
-	% draw line
-	newpath
-	% side 1
-	0 1 pathcount 1 sub {
-	    /i exch def
-	    /cur_point pathpoints i get def
-	    /x cur_point 0 get def
-	    /y cur_point 1 get def
-	    /direction cur_point 4 get def
-	    /lineout cur_point 5 get def
-	    /bevel cur_point 6 get def
-	    /direction_2 cur_point 7 get def
-	    x direction cos lineout mul add
-	    y direction sin lineout mul add
-	    i 0 eq {
-		moveto
-	    } {
-		lineto
-	    } ifelse
-	    bevel {
-		true drawbevel
-	    } if
-	} for
-	% end circle as needed
-	currentlinecap 1 eq {
-	    x y lineout direction direction 180 add arcn
-	} {
-	    /direction direction 180 add def
-	    x direction cos lineout mul add
-	    y direction sin lineout mul add
-	    lineto
-	} ifelse
-	% side 2
-	pathcount 2 sub -1 0 {
-	    /i exch def
-	    /cur_point pathpoints i get def
-	    /x cur_point 0 get def
-	    /y cur_point 1 get def
-	    /direction cur_point 4 get 180 add def
-	    /lineout cur_point 5 get def
-	    /bevel cur_point 6 get def
-	    /direction_2 cur_point 7 get 180 add def
-	    x direction_2 cos lineout mul add
-	    y direction_2 sin lineout mul add
-	    lineto
-	    bevel { false drawbevel } if
-	} for
-	% start circle if needed
-	currentlinecap 1 eq {
-	    x y lineout direction direction 180 add arcn
-	} if
-	closepath
+                i 0 eq i pathcount 1 sub eq or {
+                    /lineout linerad def
+                    i 0 eq {
+                        /direction ndir 90 add def
+                        currentlinecap 2 eq {
+                            /x x ndir cos neg lineout mul add def
+                            /y y ndir sin neg lineout mul add def
+                        } if
+                    } {
+                        /direction ldir 90 sub def
+                        currentlinecap 2 eq {
+                            /x x ldir cos neg lineout mul add def
+                            /y y ldir sin neg lineout mul add def
+                        } if
+                    } ifelse
+                    /direction_2 direction def
+                } {
+                    /theta ndir ldir sub def
+                    theta 0 lt {
+                        /theta theta 360 add def
+                    } if
+                    /phi 90 theta 2 div sub def
+                    % actual distance to junction point
+                    phi cos 0 eq {
+                        /lineout 0 def
+                    } {
+                        /lineout linerad phi cos div def
+                    } ifelse
+                    % direction to junction point
+                    /direction ndir 90 add phi add def
+                    0 currentlinejoin ne
+                    lineout linerad zdiv currentmiterlimit gt or {
+                        /bevel true def
+                        /lineout linerad def
+                        /direction ldir 90 sub 360 mymod def
+                        /direction_2 ndir 90 add 360 mymod def
+                        i pathcount 1 sub eq {
+                            /bevel false def
+                        } if
+                    } {
+                        /direction_2 direction def
+                    } ifelse
+                } ifelse
+                pathpoints i [x y dist /l direction lineout bevel direction_2] put
+            } for
+
+            % draw line
+            newpath
+            % side 1
+            0 1 pathcount 1 sub {
+                /i exch def
+                /cur_point pathpoints i get def
+                /x cur_point 0 get def
+                /y cur_point 1 get def
+                /direction cur_point 4 get def
+                /lineout cur_point 5 get def
+                /bevel cur_point 6 get def
+                /direction_2 cur_point 7 get def
+                x direction cos lineout mul add
+                y direction sin lineout mul add
+                i 0 eq {
+                    moveto
+                } {
+                    lineto
+                } ifelse
+                bevel {
+                    true drawbevel
+                } if
+            } for
+            % end circle as needed
+            currentlinecap 1 eq {
+                x y lineout direction direction 180 add arcn
+            } {
+                /direction direction 180 add def
+                x direction cos lineout mul add
+                y direction sin lineout mul add
+                lineto
+            } ifelse
+            % side 2
+            pathcount 2 sub -1 0 {
+                /i exch def
+                /cur_point pathpoints i get def
+                /x cur_point 0 get def
+                /y cur_point 1 get def
+                /direction cur_point 4 get 180 add def
+                /lineout cur_point 5 get def
+                /bevel cur_point 6 get def
+                /direction_2 cur_point 7 get 180 add def
+                x direction_2 cos lineout mul add
+                y direction_2 sin lineout mul add
+                lineto
+                bevel { false drawbevel } if
+            } for
+            % start circle if needed
+            currentlinecap 1 eq {
+                x y lineout direction direction 180 add arcn
+            } if
+            closepath
+        } if
     end
 } def
 
@@ -666,12 +705,13 @@ end
     closepath
 } def
 
-/ObjectLineDict 15 dict def
+/ObjectLineDict 15 dict defaultdef
 ObjectLineDict begin
+    /_rotateobj true defaultdef
     /_ObjectLineto {
         /ny arg /nx arg
         /seglen ny oy sub dup mul nx ox sub dup mul add sqrt def
-        ol seglen add separation gt {
+        ol seglen add separation ge {
             /steps ol seglen add separation div cvi def
             1 1 steps
             {
@@ -683,8 +723,12 @@ ObjectLineDict begin
                         ox oy translate
                         nx ox sub ratio mul         % position from o
                         ny oy sub ratio mul
-                        2 copy translate
-                        exch myatan rotate
+                        _rotateobj {
+                            2 copy translate
+                            exch myatan rotate
+                        } {
+                            translate
+                        } ifelse
                         object
                     grestore
                 } if
@@ -694,12 +738,13 @@ ObjectLineDict begin
         /ox nx def /oy ny def /ol ol seglen add def
     } def
 end
-/ObjectLine {
+/ObjectLinePhase {
     ObjectLineDict begin
         /object arg
+        /phase arg
         /separation arg
         flattenpath
-        { /oy arg /ox arg /ol 0 def /cx ox def /cy oy def} %moveto
+        { /oy arg /ox arg /ol phase def /cx ox def /cy oy def} %moveto
         {
             _ObjectLineto
         } % lineto
@@ -708,6 +753,7 @@ end
         pathforall
     end
 } def
+/ObjectLine { 0 exch ObjectLinePhase } def
 
 /cstroke { brushystroke } def
 /setplain { /cstroke { stroke } def } def

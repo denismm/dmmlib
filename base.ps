@@ -277,13 +277,14 @@ end
 % takes a proc, runs it on both sides
 /hmirror {
     2 dict begin
-    /lr_function arg
-    -1 2 1 {
-        gsave
-            1 scale
-            lr_function
-        grestore
-    } for
+        /lr_function arg
+        -1 2 1 {
+            gsave
+                1 scale
+                lr_function
+            grestore
+        } for
+    end
 } def
 
 /grayfill { gsave setgray fill grestore } def

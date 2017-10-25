@@ -157,6 +157,43 @@ end
     end
 } def
 
+/circle_center_show {
+    layout_dict begin gsave
+        /r arg
+        /text_to_show arg
+        /sentinel
+        /width text_to_show stringwidth pop def
+        /full_angle width 3.14159 r mul div 180 mul def
+        full_angle 2 div rotate
+
+        % 0 0 r namefontsize 0.75 mul half sub 90 90 full_angle sub arcn
+        % 0 0 r namefontsize 0.75 mul half add 90 full_angle sub 90 arc
+        % whitefill newpath
+
+        % rotation per character is full_angle * (charwidth / width)
+        /rot_per_unit full_angle width div def
+        /minibuf ( ) def
+        text_to_show {
+            /char_to_show arg
+            minibuf 0 char_to_show put
+            /charwidth minibuf stringwidth pop def
+            /half_rot charwidth rot_per_unit mul 2 div def
+            half_rot neg rotate
+            gsave
+                0 r translate
+                X_center
+                minibuf center_base_show
+            grestore
+            half_rot neg rotate
+        } forall
+    grestore end
+    dup /sentinel eq {
+        pop
+    } {
+        die
+    } ifelse
+} def
+
 /change_encoding_dict 5 dict def
 % args:
 % existing fontname (like /Times),
