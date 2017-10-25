@@ -75,7 +75,7 @@ PlaceList {
 } defaultdef
 
 /namefontsize 1.25 defaultdef
-/namefont { /Palatino-Bold findfont namefontsize scalefont setfont } defaultdef
+/namefont { /Helvetica findfont namefontsize scalefont setfont } defaultdef
 
 % Draw name on object
 /nameshow {
@@ -211,6 +211,11 @@ Connections {
 	/dataset arg
         /traveltype dataset 0 get def
 
+        % canonicalize to array
+        traveltype type /arraytype ne {
+            /traveltype [traveltype] def
+        } if
+
         % draw line
         newpath
         1 1 dataset length 1 sub {
@@ -219,7 +224,12 @@ Connections {
         gsave
             % line type
             0 setgray
-            TravelTypes traveltype get exec
+            % run travel modifiers ending with actual type
+            0 1 traveltype length 2 sub {
+                traveltype exch get TravelModifiers exch get exec
+            } for
+
+            TravelTypes traveltype dup length 1 sub get get exec
         grestore
         newpath
     grestore
@@ -231,7 +241,8 @@ namefont
 placethickness setlinewidth
 Places {
     /dataset arg        % x y area name type
-    /name arg
+    /placename arg
+    /sentinel
     gsave
 	dataset 0 get 
         dataset 1 get translate % x y
@@ -275,6 +286,11 @@ Places {
             % } forall
         % } if
     grestore
+    dup /sentinel eq {
+        pop
+    } {
+        die
+    } ifelse
 } forall
 
 showpage

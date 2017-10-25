@@ -310,6 +310,14 @@ Text manipulation and display functions.
 > Respect newlines.  Return the number of lines shown.  Does not
 > change the current transformation matrix.
 
+*string radius* **circle_center_show** *-*
+
+> **Show** the string along a circular path, centered on 
+> the origin, with the X center at the specified radius.
+> The string will be centered around the 90-degree axis.  If a
+> negative radius is provided the text will curve inward and be centered
+> on the 270-degree axis.
+
 *basefont encoding newfont* **change_encoding** *-*
 
 > Define a new version of *basefont* with the given encoding.
