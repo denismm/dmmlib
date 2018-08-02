@@ -287,6 +287,18 @@ end
     end
 } def
 
+/vmirror {
+    2 dict begin
+        /tb_function arg
+        -1 2 1 {
+            gsave
+                1 exch scale
+                tb_function
+            grestore
+        } for
+    end
+} def
+
 /grayfill { gsave setgray fill grestore } def
 /rgbfill { gsave setrgbcolor fill grestore } def
 /whitefill { 1 grayfill } def
