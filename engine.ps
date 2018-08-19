@@ -155,7 +155,7 @@ PlaceList {
     pointname type dup reaction exch known {
         reaction exch get exec
     } {
-        pop die
+        pop die_getpoint
     } ifelse
 } def
 
@@ -235,6 +235,18 @@ Connections {
     grestore
 } forall
 
+/sentinel_exec {
+    3 dict begin
+        /arg_n arg
+        /exec_name arg
+        /sentinel_number rand def
+        sentinel_number arg_n 2 add 1 roll exec
+        dup sentinel_number ne {
+            exec_name == underflow_die
+        } if
+        pop
+    end
+} def
 % Draw places
 namefont
 /placethickness 0.025 defaultdef
@@ -255,15 +267,15 @@ Places {
                 /placetype [placetype] def
             } if
             PlaceModifiers /Default known {
-                PlaceModifiers /Default get exec
+                PlaceModifiers /Default get /placedefault 0 sentinel_exec
             } if
             0 1 placetype length 2 sub {
-                placetype exch get PlaceModifiers exch get exec
+                placetype exch get PlaceModifiers exch get /placemod 0 sentinel_exec
             } for
             placeradius softscale
             gsave
                 placetype dup length 1 sub get
-                PlaceTypes exch get exec
+                PlaceTypes exch get /placetype 0 sentinel_exec
             grestore
             /NamePlaces where {
                 pop
@@ -276,20 +288,11 @@ Places {
                 dataset 3 get nameshow
             } ifelse
         grestore
-        % dataset length 5 gt {
-            % dataset 5 get {
-                % gsave
-                    % /subdata arg
-                    % subdata 0 get subdata 1 get translate
-                    % X_center subdata 2 get nameshow
-                % grestore
-            % } forall
-        % } if
     grestore
     dup /sentinel eq {
         pop
     } {
-        die
+        die_places_underflow
     } ifelse
 } forall
 
