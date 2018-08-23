@@ -34,6 +34,10 @@ x(t) = A + (3B-3A)t + (3C - 6B + 3A)tt + (D - 3C + 3B - A)ttt
 x'(t) =  (3B-3A) + (6C-12B+6A)t + (3D-9C+9B-3A)tt
 
 check our work with p = 0, q = 1
+x(0) = A  :)
+x(1) = A + 3B-3A + 3C - 6B + 3A + D - 3C + 3B - A
+x(1) = A - 3A + 3A - A + 3B - 6B + 3B + 3C - 3C + D
+x(1) = D  :)
 x'(0) = 3B - 3A
 x'(1) = 3B - 3A + 6C - 12B + 6A + 3D - 9C + 9B - 3A
 x'(1) = 3D + 6C - 9C + 3B - 12B + 9B - 3A + 6A - 3A
@@ -42,7 +46,7 @@ A + (3B - 3A)/3 = B
 D - (3D - 3C)/3 = C
 
 magnitude of AB, CD is 1/3
-magnitude of AB, CD is (q-p)/3
+magnitude of EF, GH is (q-p)/3
 
 F = E + (x'(p))(q-p)/3
 G = H - (x'(q))(q-p)/3
