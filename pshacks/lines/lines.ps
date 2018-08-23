@@ -6,6 +6,9 @@
 /asin {
     dup dup mul 1 exch sub sqrt atan
 } def
+/tan {
+    dup sin exch cos div
+} def
 
 % handle zeros
 /myatan {
@@ -762,4 +765,256 @@ end
 /setplain { /cstroke { stroke } def } def
 /setbrushy { /cstroke { brushystroke } def } def
 /setspindly { /cstroke { spindlystroke } def } def
+
+/intersection {
+    /ntheta arg
+    /ny arg
+    /nx arg
+    /otheta arg
+    /oy arg
+    /ox arg
+    % find intersection based on y = mx + b
+    otheta cos 0 eq {
+        % swap to simplify processing
+        otheta ntheta /otheta arg /ntheta arg
+    } if
+    ntheta cos 0 eq {
+        otheta cos 0 eq {
+            % both 0, skip out
+            /ix ox def /iy oy def
+        }
+        /om otheta tan def
+        /ob oy om ox mul sub def
+        /ix nx def
+        /iy nx om mul ob add def
+    } {
+        /om otheta tan def
+        /nm ntheta tan def
+        om nm eq {
+            % if slopes are equal, either parallel or coincident
+            /ix ox def
+            /iy oy def
+        } {
+            /ob oy om ox mul sub def
+            /nb ny nm nx mul sub def
+
+            /ix nb ob sub om nm sub div def
+            /iy ix om mul ob add def
+        } ifelse
+    } ifelse
+    ix iy
+} def
+
+/lines_dict 20 dict def
+% see lines/splitspline.txt for derivation
+lines_dict begin
+    /subspline_1d {
+        /q arg /p arg
+        /D arg /C arg /B arg /A arg
+
+        /xfunc {
+            /t arg
+            1 A mul
+            3 B mul 3 A mul sub                     t mul add
+            3 C mul 6 B mul sub 3 A mul add         t mul t mul add
+            1 D mul 3 C mul sub 3 B mul add A sub   t mul t mul t mul add
+        } def
+
+        /xprime {
+            /t arg
+            3 B mul  3 A mul sub
+            6 C mul 12 B mul sub 6 A mul add                t mul add
+            3 D mul  9 C mul sub 9 B mul add 3 A mul sub    t mul t mul add
+        } def
+        /coeff q p sub 3 div def
+        /E p xfunc def
+        /H q xfunc def
+        /F p xprime coeff mul E add def
+        /G q xprime coeff mul H exch sub def
+        E F G H
+    } def
+
+    /subspline_points {
+        /q arg /p arg
+        /Dy arg /Dx arg
+        /Cy arg /Cx arg
+        /By arg /Bx arg
+        /Ay arg /Ax arg
+        Ax Bx Cx Dx p q subspline_1d /Hx arg /Gx arg /Fx arg /Ex arg
+        Ay By Cy Dy p q subspline_1d /Hy arg /Gy arg /Fy arg /Ey arg
+        Ex Ey Fx Fy Gx Gy Hx Hy
+    } def
+end
+
+/splitcurveto {
+    lines_dict begin
+        /divisions arg
+        /Dy arg /Dx arg
+        /Cy arg /Cx arg
+        /By arg /Bx arg
+        currentpoint
+        /Ay arg /Ax arg
+        0 1 divisions 1 sub {
+            /i arg
+            Ax Ay Bx By Cx Cy Dx Dy
+            i divisions div
+            i 1 add divisions div
+            subspline_points
+            8 -2 roll pop pop
+            curveto
+        } for
+    end
+} def
+
+lines_dict begin
+    /ca_lean /left def
+    /ca_mode /simple def
+end
+/constrangle_setleft { lines_dict begin /ca_lean /left def end } def
+/constrangle_setright { lines_dict begin /ca_lean /right def end } def
+/constrangle_setsimple { lines_dict begin /ca_mode /simple def end } def
+/constrangle_setclever { lines_dict begin /ca_mode /clever def end } def
+/constrangle_path {
+    lines_dict begin
+        /directions arg
+        /angle_increment 360 directions div def
+        /pathcount 0 def
+        /closed_path false def
+        gsave
+            { pop pop /pathcount pathcount 1 add def } % moveto
+            { pop pop /pathcount pathcount 1 add def } % lineto
+            { quit_constrangle_curveto } % curveto
+            { /pathcount pathcount 1 add def /closed_path true def} % closepath
+            pathforall
+        grestore
+        /pathpoints pathcount array def
+        /pathangles pathcount 1 sub array def
+        /i 0 def
+        /firstpoint false def
+        /addpoint {
+            /y arg /x arg
+            /point [ x y ] def
+            firstpoint false eq {
+                /firstpoint point def
+            } if
+            pathpoints i point put
+            i 0 gt {
+                pathpoints i 1 sub get aload pop /oy arg /ox arg
+                /theta y oy sub x ox sub atan def
+                pathangles i 1 sub theta put
+            } if
+            /i i 1 add def
+        } def
+        { addpoint } % moveto
+        { addpoint } % lineto
+        { quit_constrangle_curveto } % curveto
+        { firstpoint aload pop addpoint } % closepath
+        pathforall
+        newpath
+        firstpoint aload pop moveto
+        0 1 pathcount 2 sub {
+            /i arg
+            /oldpoint pathpoints i get def
+            /newpoint pathpoints i 1 add get def
+            oldpoint aload pop /oy arg /ox arg
+            newpoint aload pop /ny arg /nx arg
+            /line_angle pathangles i get def
+            % add intermediate point if necessary
+            line_angle angle_increment mymod 0 eq not {
+                /angle_coeff line_angle angle_increment div def
+                /right_angle angle_coeff floor angle_increment mul def
+                /left_angle angle_coeff ceiling angle_increment mul def
+                ca_mode /clever eq {
+                    /prev_i i 1 sub def
+                    /next_i i 1 add def
+                    closed_path {
+                        /prev_i prev_i pathcount 1 sub mymod def
+                        /next_i next_i pathcount 1 sub mymod def
+                    } { 
+                        prev_i 0 lt { /prev_i i def } if
+                        next_i pathcount 2 sub gt { /next_i i def } if
+                    } ifelse
+                    /prev_angle pathangles prev_i get def
+                    /next_angle pathangles next_i get def
+                    /prev_bend line_angle prev_angle sub 360 mymod def
+                    /next_bend next_angle line_angle sub 360 mymod def
+                    /prev_dir
+                        prev_bend 0 eq { 0 } {
+                            prev_bend 180 gt 
+                                { -1 } 
+                                { prev_bend 180 lt { 1 } { 0 } ifelse }
+                            ifelse
+                        } ifelse
+                    def
+                    /next_dir
+                        next_bend 0 eq { 0 } {
+                            next_bend 180 gt 
+                                { -1 } 
+                                { next_bend 180 lt { 1 } { 0 } ifelse }
+                            ifelse
+                        } ifelse
+                    def
+                    prev_dir -1 eq {
+                        next_dir 1 eq {
+                            /lean_dir /lr def
+                        } {
+                            /lean_dir /right def
+                        } ifelse
+                    } if
+                    prev_dir 0 eq {
+                        next_dir 0 eq {
+                            /lean_dir ca_lean def
+                        } {
+                            next_dir -1 eq {
+                                /lean_dir /right def
+                            } {
+                                /lean_dir /left def
+                            } ifelse
+                        } ifelse
+                    } if
+                    prev_dir 1 eq {
+                        next_dir 1 eq {
+                            /lean_dir /rl def
+                        } {
+                            /lean_dir /left def
+                        } ifelse
+                    } if
+                    lean_dir /left eq {
+                        /oangle right_angle def /nangle left_angle def
+                    } if
+                    lean_dir /right eq {
+                        /oangle left_angle def /nangle right_angle def
+                    } if
+                    lean_dir /lr eq {
+                        /mx ox nx add 2 div def
+                        /my oy ny add 2 div def
+                        /oangle left_angle def
+                        /mid_angle right_angle def
+                        /nangle left_angle def
+                        ox oy oangle mx my mid_angle intersection /iy arg /ix arg
+                        ix iy lineto
+                        mx my lineto
+                        /ox mx def
+                        /oy my def
+                        /oangle mid_angle def
+                    }  if
+                    lean_dir /rl eq {
+                        /oangle left_angle def /nangle right_angle def
+                    } if
+                } {
+                    ca_lean /left eq {
+                        /oangle right_angle def /nangle left_angle def
+                    } {
+                        /oangle left_angle def /nangle right_angle def
+                    } ifelse
+                } ifelse
+                [oangle nangle] ==
+                ox oy oangle nx ny nangle intersection /iy arg /ix arg
+                gsave newpath ix iy dot grestore
+                ix iy lineto
+            } if
+            newpoint aload pop lineto
+        } for
+    end
+} def
 

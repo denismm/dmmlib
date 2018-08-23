@@ -274,6 +274,13 @@ A library for drawing lines differently.  More information can be found at
 > will be rotated to match the line, as if the line was traveling from left
 > to right.
 
+*x<sub>1</sub> y<sub>1</sub> x<sub>2</sub> y<sub>2</sub> x<sub>3</sub> y<sub>3</sub> divisions* **splitcurveto** *-*
+
+> As **curveto** but creates *divisions* sub-splines, following the same
+> path as the spline *curveto* would create.  Undetectable with a normal
+> stroke but possibly useful when using some of the line styles in this
+> library.
+
 ## textbase.ps
 Text manipulation and display functions.
 

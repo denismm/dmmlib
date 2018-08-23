@@ -1,0 +1,49 @@
+Spline formula:
+
+t 0->1
+s 1 - t
+
+x(t) = Asss + Bsst + Cstt + Dttt
+
+sss = (1-t)^3 = 1 - 3t + 3tt - ttt
+sst = t(1-t)^2 = t - 2tt + ttt
+stt = tt(1-t) = tt - ttt
+ttt = ttt
+
+x(t) = A - 3At + 3Att -  Attt
+         + 3Bt - 6Btt + 3Bttt
+               + 3Ctt - 3Cttt
+                      +  Dttt
+x(t) = A + (3B-3A)t + (3C - 6B + 3A)tt + (D - 3C + 3B - A)ttt
+
+we want:
+
+pick 2 points to start and end at
+point 1: p (in 0-1 range)
+point 2: q (likewise, q > p)
+u = p -> q
+v = 1 - u
+x(t) = z(v) = Euuu + Fuuv + Guvv + Hvvv
+
+E is same as starting point = x(p)
+H is same as ending point = x(q)
+
+A->B is tangent to spline at p, D->C is tangent to spline at q
+
+x(t) = A + (3B-3A)t + (3C - 6B + 3A)tt + (D - 3C + 3B - A)ttt
+x'(t) =  (3B-3A) + (6C-12B+6A)t + (3D-9C+9B-3A)tt
+
+check our work with p = 0, q = 1
+x'(0) = 3B - 3A
+x'(1) = 3B - 3A + 6C - 12B + 6A + 3D - 9C + 9B - 3A
+x'(1) = 3D + 6C - 9C + 3B - 12B + 9B - 3A + 6A - 3A
+x'(1) = 3D - 3C
+A + (3B - 3A)/3 = B
+D - (3D - 3C)/3 = C
+
+magnitude of AB, CD is 1/3
+magnitude of AB, CD is (q-p)/3
+
+F = E + (x'(p))(q-p)/3
+G = H - (x'(q))(q-p)/3
+
