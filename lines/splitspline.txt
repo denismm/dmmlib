@@ -3,7 +3,7 @@ Spline formula:
 t 0->1
 s 1 - t
 
-x(t) = Asss + Bsst + Cstt + Dttt
+x(t) = Asss + 3Bsst + 3Cstt + Dttt
 
 sss = (1-t)^3 = 1 - 3t + 3tt - ttt
 sst = t(1-t)^2 = t - 2tt + ttt
@@ -23,12 +23,12 @@ point 1: p (in 0-1 range)
 point 2: q (likewise, q > p)
 u = p -> q
 v = 1 - u
-x(t) = z(v) = Euuu + Fuuv + Guvv + Hvvv
+x(t) = z(v) = Euuu + 3Fuuv + 3Guvv + Hvvv
 
 E is same as starting point = x(p)
 H is same as ending point = x(q)
 
-A->B is tangent to spline at p, D->C is tangent to spline at q
+E->F is tangent to spline at p, H->G is tangent to spline at q
 
 x(t) = A + (3B-3A)t + (3C - 6B + 3A)tt + (D - 3C + 3B - A)ttt
 x'(t) =  (3B-3A) + (6C-12B+6A)t + (3D-9C+9B-3A)tt

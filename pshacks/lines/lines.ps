@@ -704,6 +704,17 @@ end
     end
 } def
 
+/splitcircle {
+    /n arg
+    /radius arg
+    /y arg
+    /x arg
+    n {
+        x y radius 0 360 n div sparc
+    } circrepeat
+    closepath
+} def
+
 /spcircle {
     3 copy 3 -1 roll add exch moveto
     3 copy 0 180 sparc
