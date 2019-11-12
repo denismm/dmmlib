@@ -153,7 +153,7 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > Puts a small circle at x y.  Radius is 1.5 times the currentlinewidth.
 
-- **doot** -
+*-* **doot** -
 
 > Puts a dot at 0,0.
 
