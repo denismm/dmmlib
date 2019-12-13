@@ -105,6 +105,10 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > Appends a circle to the current path.
 
+*x y r* **square** -
+
+> Appends a square to the current path centered at xy with a side of 2r.
+
 **lcurveto, pcurveto**
 
 > Drop-in replacements for **curveto** that respectively draw lines to the

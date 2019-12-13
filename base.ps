@@ -207,6 +207,15 @@ end
     moveto lineto lineto lineto closepath
 } def
 
+/square {       % like circle but square
+    3 dict begin
+        /r arg
+        /y arg
+        /x arg
+        x r sub y r sub x r add y r add box
+    end
+} def
+
 /roundboxdict 5 dict def
 %box with rounded corners
 /roundbox {
