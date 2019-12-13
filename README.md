@@ -74,6 +74,7 @@ These are math functions that I use often enough to not want to constantly rewri
 > `/star {5 2 {0 2 goto} schlafrepeat closepath stroke } def`
 
 *proc* **hmirror** *-*
+
 *proc* **vmirror** *-*
 
 > Takes a proc and runs it twice, once with a `-1 1 scale` or `1 -1 scale` in effect.
@@ -156,7 +157,7 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > Puts a small circle at x y.  Radius is 1.5 times the currentlinewidth.
 
-- **doot** -
+*-* **doot** -
 
 > Puts a dot at 0,0.
 
