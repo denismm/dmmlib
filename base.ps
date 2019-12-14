@@ -312,6 +312,15 @@ end
 /rgbfill { gsave setrgbcolor fill grestore } def
 /whitefill { 1 grayfill } def
 
+/sinebow {
+    neg
+    dup cos exch
+    dup 120 add cos exch
+    120 sub cos
+} def
+
+/setsinebowcolor { sinebow setrgbcolor } def
+
 % render an eps file, given filename and bounding box, 
 % with ll at 0,0 and height of 1
 /epsdict 10 dict def
