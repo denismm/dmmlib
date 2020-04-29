@@ -186,8 +186,7 @@
     grestore
 } def
 
-
-/gradientfill {
+/radial_gradient_fill {
     /gradient_steps arg
     /blue arg
     /green arg
@@ -208,5 +207,4 @@
     grestore
 } def
 
-
-
+/gradientfill { radial_gradient_fill } def

@@ -1,0 +1,44 @@
+%!
+(dmmlib/base.ps) run
+
+/watermark_dict 10 dict def
+watermark_dict begin
+    /black [0 0 0] def
+    /white [1 1 1] def
+    /true_setrgbcolor {setrgbcolor} bind def
+    /setrgbcolor {
+        add add 3 div setgray
+    } def
+    /setgray {
+        /g arg
+        /nrgb 3 array def
+        0 1 2 {
+            /i arg
+            /k black i get def
+            /w white i get def
+            k w k sub g mul add nrgb exch i exch put
+        } for
+        nrgb aload pop true_setrgbcolor
+    } def
+    /watermark_setup {
+        /black arg /white arg
+        /extra_scale arg
+        /path_t arg
+        /path_r arg
+        /path_b arg
+        /path_l arg
+        path_l path_r add half path_t path_b add half translate
+        path_r path_l sub 11 72 mul div 
+        path_t path_b sub 8.5 72 mul div
+        maximum
+        extra_scale mul 
+        dup scale
+        -4.25 72 mul -5.5 72 mul translate
+        0 0 8.5 72 mul 11 72 mul box
+        clippath
+        1 setgray fill
+        0 setgray
+    } def
+    /showpage {
+    } def
+end
