@@ -26,6 +26,8 @@
 /minimum { 2 copy lt { pop } { exch pop } ifelse } def
 /half { 2 div } def
 
+/PI 3.1415926 def
+
 % mod that accepts floats and makes negatives positive
 /mod_dict 2 dict def
 /mymod {
@@ -310,6 +312,7 @@ end
 
 /grayfill { gsave setgray fill grestore } def
 /rgbfill { gsave setrgbcolor fill grestore } def
+/hsbfill { gsave sethsbcolor fill grestore } def
 /whitefill { 1 grayfill } def
 
 /sinebow {
@@ -320,6 +323,7 @@ end
 } def
 
 /setsinebowcolor { sinebow setrgbcolor } def
+/sinebowfill { gsave setsinebowcolor fill grestore } def
 
 % render an eps file, given filename and bounding box, 
 % with ll at 0,0 and height of 1
