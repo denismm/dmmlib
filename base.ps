@@ -44,7 +44,14 @@
 } def
 
 
-/randint {rand exch mod} def
+/randint {rand exch cvi mod} def
+
+/randrange {
+    /resolution arg
+    /max arg
+    /min arg
+    max min sub resolution mul randint resolution div min add
+} def
 
 % curve analysis
 /lcurveto_dict 8 dict def

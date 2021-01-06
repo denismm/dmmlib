@@ -51,6 +51,14 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > Returns a random integer from 0 to int - 1.
 
+*min* *max* *resolution* **randrange** *num*
+
+> Returns a random number between **min** and **max**, at a resolution of 1/**resolution** per 1.  No argument needs to be an int.
+
+> `-4 4 100 randrange` =
+
+> **`-2.05`**
+
 ### Dictionary Operators
 *value key* **arg** *-*
 
