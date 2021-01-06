@@ -169,11 +169,23 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > Puts a dot at 0,0.
 
+*angle* **sinebow** *r* *g* *b*
+
+> Convert an angle to the rgb equivalent around the sinebow circle.
+
+*angle* **setsinebowcolor** *-*
+
+> Set the current color to the given angle around the sinebow circle.
+
 *-* **whitefill** *-*
 
 *num* **grayfill** *-*
 
 *red green blue* **rgbfill** *-*
+
+*hue saturation brightness* **hsbfill** *-*
+
+*angle* **sinebowfill** *-*
 
 > Fill the current path with the given color, leaving the path unaffected.
 
