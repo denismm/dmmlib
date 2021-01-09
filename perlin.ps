@@ -1,0 +1,42 @@
+%!
+
+/perlin_dict 10 dict def
+
+perlin_dict begin
+    /smoothstep {
+        dup dup mul exch 2 mul 3 exch sub mul
+    } def
+end
+
+% a "perlin 1 structure" is a dictionary containing a "length" and a "grid"
+% the "grid" is a set of random numbers in the -1 to 1 range.  It's actually
+% 2 longer than the length for fencepost reasons.
+/make_perlin_1_struct {
+    perlin_dict begin
+        /p_struct 2 dict def
+        /p_length exch def
+        p_struct /length p_length put
+        p_struct /grid [ p_length 2 add { -1 1 100 randrange } repeat ] put
+        p_struct
+    end
+} def
+
+% takes a number from 0 to 1 and a perlin_1 struct, rescales the 
+% number to be from 0 to struct[length], and finds the perlin noise 
+% value for that number.
+/perlin_1 {
+    perlin_dict begin
+        /struct exch def
+        struct /length get mul /x exch def
+        /grid struct /grid get def
+        /prev x cvi def
+        /next prev 1 add def
+        grid prev get
+        x prev sub smoothstep
+        grid next get
+        grid prev get sub
+        mul
+        add
+    end
+} def
+

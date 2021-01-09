@@ -395,5 +395,21 @@ Load a PPM or PGM format image onto the page.  For more details, see
 * **_square**: scale so smallest dimension is 1 unit, clip to 0,0,1,1 square
 * **_fit**: scale so largest dimension is 1 unit, center in 0,0,1,1 square
 
+## perlin.ps
+Code to provide Perlin noise.  Currently only supports 1-dimensional noise.
+
+*p_length* **make_perlin_1_struct** *perlin_1_struct*
+
+> Create a structure suitable to be passed to **perlin_1**.  This structure
+> is a dictionary containing a "length" and a "grid", the grid being n+2
+> random numbers between -1 and 1.
+
+*x* *struct* **perlin_1** *value*
+
+> Generate the Perlin noise value for *x*, which should be a number from 0
+> to 1.  This value is scaled by the structure length, then used to get a
+> noise value for the grid with the standard Perlin noise algorithm.
+> The smoothstep equation is used for interpolating between grid values.
+
 ## polar.ps
 ## engine.ps
