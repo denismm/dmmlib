@@ -86,10 +86,10 @@
 
 
 boltdict begin
-    /pathtolines {
+    /pathtolineslengthp { /include_length arg
 	% analyze current path, creating pathpoints array
 	% turn all curves into lines
-	% pathpoints format: [x y lengthsofar]
+	% pathpoints format: [x y lengthsofar] if include_length
 
         flattenpath
         /pathcount 0 def
@@ -104,6 +104,14 @@ boltdict begin
         /pathpoints pathcount array def
 	/i 0 def
 	/x 0 def /y 0 def /linelen 0 def
+        /addpoint {
+            pathpoints i [x y 
+                include_length {
+                    linelen
+                } if
+            ] put
+            /i i 1 add def
+        } def
 
 	/addline {
 	    i 0 eq {quit} if
@@ -114,8 +122,7 @@ boltdict begin
 		% linelen += length, update x and y
 		seglen linelen add /linelen exch def
 		/x nx def /y ny def
-		pathpoints i [x y linelen] put
-		/i i 1 add def
+                addpoint
 	    } {
 		/pathcount pathcount 1 sub def
 	    } ifelse
@@ -125,8 +132,7 @@ boltdict begin
 	{
 	    /y exch def /x exch def
 	    i 0 ne {quit} if
-	    pathpoints i [x y linelen] put
-	    /i i 1 add def
+            addpoint
 	}
 	{ addline } % lineto
 	{ quit } % curve
@@ -137,6 +143,7 @@ boltdict begin
 	} % close
 	pathforall
     } def
+    /pathtolines {true pathtolineslengthp} def
 
     % internal helper function for calligraphic, etc.
     /pathtocurves {
@@ -402,40 +409,31 @@ end
     end
 } def
 
+/outline {
+    boltdict begin
+        /linefunc arg
+        gsave
+            linefunc
+            setlinewidth
+            stroke
+        grestore
+        newpath
+    end
+} def
+
 /bolt {
     { dist linelen div 1 exch sub currentlinewidth mul 2 div } var_line
 } def
-/boltstroke {
-    bolt fill
-} def
-
-/boltoutline {
-    gsave
-	bolt
-	setlinewidth
-	stroke
-    grestore
-    newpath
-} def
+/boltstroke { bolt fill } def
+/boltoutline { {bolt} outline } def
 
 /bipoint {
     {i 0 eq i pathcount 1 sub eq or {0} {currentlinewidth 2 div} ifelse}
     var_line
 } def
 
-/bipointstroke {
-    bipoint fill
-} def
-
-/bipointoutline {
-    gsave
-	bipoint
-	setlinewidth
-	stroke
-    grestore
-    newpath
-} def
-
+/bipointstroke { bipoint fill } def
+/bipointoutline { {bipoint} outline } def
 
 /calligraphic {
     boltdict begin
@@ -776,6 +774,13 @@ end
 /setplain { /cstroke { stroke } def } def
 /setbrushy { /cstroke { brushystroke } def } def
 /setspindly { /cstroke { spindlystroke } def } def
+
+/returnlines {
+    boltdict begin
+        false pathtolineslengthp
+        pathpoints
+    end
+} def
 
 /intersection {
     /ntheta arg

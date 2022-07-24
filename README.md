@@ -59,6 +59,24 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > **`-2.05`**
 
+### Geometry Operators
+
+*r* *q* *d* **circle_intersection** *a*
+
+> Returns the intersection angle of two circles.
+> r is the radius of the near circle (centered on origin).
+> q is the radius of the far circle (centered on d,0).
+> d is the distance between centers.
+> The return value is the angle from the origin to the positive-y intersection.
+
+*ax* *ay* *bx* *by* **distance** *d*
+
+> returns the distance between (ax, ay) and (bx, by).
+
+*ax* *ay* *bx* *by* **angle4** *d*
+
+> returns the angle of the line (ax, ay) - (bx, by).
+
 ### Dictionary Operators
 *value key* **arg** *-*
 
@@ -335,6 +353,11 @@ Text manipulation and display functions.
 > similar) to show the string, using scale to compress the line horizontally
 > if necessary to keep it within the given width.
 
+*string num proc* **width_line_show** *-*
+
+> As **width_line_show** but scale the text in both dimensions 
+> rather than compressing.
+
 *string linewidth lineheight proc* **paragraph_show** *lines*
 
 > **Show** the string formatted into a paragraph.  Wrap lines to
@@ -410,6 +433,17 @@ Code to provide Perlin noise.  Currently only supports 1-dimensional noise.
 > to 1.  This value is scaled by the structure length, then used to get a
 > noise value for the grid with the standard Perlin noise algorithm.
 > The smoothstep equation is used for interpolating between grid values.
+
+## intersections.ps
+Code to find the intersection between two paths.  Currently uses an n-squared algorithm.
+
+*{path_method_1}* *{path_method_2}* **path_intersections** *intersection_array*
+
+> Find the intersections between two paths.  Paths are provided as functions
+> encased in brackets. These functions should create a path but not stroke
+> or fill it.  The resulting path should be continuous with no internal moveto
+> commands. The return value is an array containing points as two-element
+> [x y] arrays.  There may be any number of these, including 0.
 
 ## polar.ps
 ## engine.ps

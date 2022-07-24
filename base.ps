@@ -81,6 +81,31 @@
     end
 } def
 
+/circle_intersection {
+    5 dict begin
+        % r is radius of near circle (centered on origin)
+        % q is radius of far circle (centered on d,0)
+        % d is distance between centers
+        % returns angle of intersection from origin
+        /d exch def
+        /q exch def
+        /r exch def
+        r dup mul d dup mul add q dup mul sub d 2 mul div
+        /x exch def
+        x r div dup dup mul 1 exch sub sqrt exch atan
+        /a exch def
+        a
+    end
+} def
+
+/distance {
+    /by arg /bx arg /ay arg /ax arg
+    ax bx sub dup mul ay by sub dup mul add sqrt
+} def
+/angle4 {
+    /by arg /bx arg /ay arg /ax arg
+    by ay sub bx ax sub atan
+} def
 
 % ellipse library
 /ellipsedict 20 dict def

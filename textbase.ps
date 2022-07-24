@@ -69,6 +69,21 @@ end
     end
 } def
 
+/width_height_line_show {
+    % as above but scale instead of compressing
+    layout_dict begin
+	/show_func arg
+	/linewidth arg
+	/line arg
+	gsave
+	    line stringwidth pop linewidth gt {
+		line stringwidth pop linewidth exch div dup scale
+	    } if
+	    line show_func
+	grestore
+    end
+} def
+
 /overflow_style /compress def
 
 /paragraph_show {

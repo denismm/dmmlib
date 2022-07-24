@@ -1,0 +1,80 @@
+%!
+(dmmlib/base.ps) run
+(dmmlib/intersections.ps) run
+
+/intersection_test {
+    /y4 arg /x4 arg
+    /y3 arg /x3 arg
+    /y2 arg /x2 arg
+    /y1 arg /x1 arg
+    x1 y1 dot
+    x2 y2 dot
+    x3 y3 dot
+    x4 y4 dot
+    x1 y1 dot
+    x1 y1 goto x2 y2 goto stroke
+    x3 y3 goto x4 y4 goto stroke
+    [[x1 y1] [x2 y2]] [[x3 y3] [x4 y4]]
+    intersection_dict begin
+        segment_intersection
+        dup false eq {
+            pop
+            x1 y1 0.1 circle 1 0 0 rgbfill stroke
+        } {
+            gsave
+                0 0.75 0 setrgbcolor
+                2 thicken
+                aload pop 0.1 circle stroke
+            grestore
+        } ifelse
+    end
+} def
+
+72 softscale
+4.25 5.5 translate
+
+gsave
+    2 2 translate
+    0.5 1 0.5 -1
+    -1 -1 1 1
+    intersection_test
+grestore
+gsave
+    2 -2 translate
+    0 0.5 0 -1
+    0 1 0 -0.5
+    intersection_test
+grestore
+gsave
+    -2 -2 translate
+    1 1 -1 -0.5
+    -1 1 1 -1
+    intersection_test
+grestore
+
+/L1 {
+    0 1 goto 1 0 -1 0 0 -1 curveto
+    0.5 0 goto
+} def
+
+/L2 {
+    -1 -1 goto
+    -1 2 goto
+    1 -1 goto
+    1 2 goto
+    closepath
+} def
+
+L1 stroke
+L2 stroke
+{L1} {L2} path_intersections {
+    gsave
+        0 0.75 0 setrgbcolor
+        2 thicken
+        aload pop 0.1 circle stroke
+    grestore
+} forall
+
+
+showpage
+

@@ -1,0 +1,135 @@
+%!
+(dmmlib/base.ps) run
+(dmmlib/lines.ps) run
+
+/intersection_dict 10 dict def
+intersection_dict begin
+    /vertvert_intersection { /lowerline arg /upperline arg
+        upperline 0 get 1 get lowerline 1 get 1 get lt {
+            upperline 0 get
+        } {
+            false
+        } ifelse
+    } def
+    /ymxb { /segment arg
+        segment aload pop /s1 arg /s0 arg
+        s0 aload pop /y0 arg /x0 arg
+        s1 aload pop /y1 arg /x1 arg
+        /slope y1 y0 sub x1 x0 sub div def
+        /yintercept y0 slope x0 mul sub def
+        slope yintercept
+    } def
+    /inbbox { /boxline arg /inpoint arg
+        inpoint aload pop /iny arg /inx arg
+        boxline ysort aload pop
+            aload pop /y1 arg /x1 arg
+            aload pop /y0 arg /x0 arg
+        x1 x0 lt {
+            x1 x0 /x1 arg /x0 arg
+        } if
+        x0 inx le x1 inx ge and
+        y0 iny le y1 iny ge and and
+    } def
+    /vert_crossing { /vline arg /cline arg
+        /vline vline ysort def
+        /cline cline xsort def
+        % intersection x is bx
+        /ix vline 0 get 0 get def
+        cline aload pop /c1 arg /c0 arg
+        % is ix between crossing x points?
+        c0 0 get ix le c1 0 get ix ge and {
+            c0 aload pop /y0 arg /x0 arg
+            c1 aload pop /y1 arg /x1 arg
+            % what is intersection y?
+            /iy ix x0 sub y1 y0 sub mul x1 x0 sub div y0 add def
+            % is it on vline?
+            [ix iy] vline inbbox {
+                [ix iy]
+            } { false } ifelse
+        } { false } ifelse
+    } def
+    /segment_intersection {
+        dup length array copy /bline arg 
+        dup length array copy /aline arg
+
+        % where does aline intersect bline?
+        % aline and bline are in the format [[x y] [x y]]
+        % return false or a single intersection point [x y]
+        /linesort { /coord arg /linestruct arg
+            linestruct 0 get coord get linestruct 1 get coord get gt {
+                [linestruct 1 get linestruct 0 get]
+            }{
+                linestruct
+            } ifelse
+        } def
+        /xsort { 0 linesort } def
+        /ysort { 1 linesort } def
+        % check verticality
+        /vertcheck { /vline arg vline 0 get 0 get vline 1 get 0 get eq } def
+        /avert aline vertcheck def
+        /bvert bline vertcheck def
+        avert {
+            /aline aline ysort def
+            bvert {
+                /bline bline ysort def
+                % both vertical
+                aline 0 get 0 get bline 0 get 0 get eq {
+                    % same line
+                    aline 0 get 1 get bline 0 get 1 get gt {
+                        aline bline vertvert_intersection
+                    } {
+                        bline aline vertvert_intersection
+                    } ifelse
+                } { false } ifelse % parallel
+            } {
+                bline aline vert_crossing
+            } ifelse
+        } {
+            bvert {
+                aline bline vert_crossing
+            } {
+                /aline aline xsort def
+                /bline bline xsort def
+                % line intersection
+                aline ymxb /ab arg /am arg
+                bline ymxb /bb arg /bm arg
+                % algebra solve
+                /ix bb ab sub am bm sub div def
+                /iy am ix mul ab add def
+                % is it on both lines?
+                [ix iy] aline inbbox
+                [ix iy] bline inbbox and {
+                    [ix iy]
+                } { false } ifelse
+            } ifelse
+        } ifelse
+    } def
+end
+
+/path_intersections { /path2 arg /path1 arg
+    intersection_dict begin
+        gsave path1 boltdict begin returnlines end dup length array copy /lines1 arg grestore
+        gsave path2 boltdict begin returnlines end dup length array copy /lines2 arg grestore
+        /intersections 1 array def
+        /i_count 0 def
+        0 1 lines1 length 2 sub { /i arg
+            0 1 lines2 length 2 sub { /j arg
+                /seg1 [ lines1 i get lines1 i 1 add get ] def
+                /seg2 [ lines2 j get lines2 j 1 add get ] def
+                seg1 seg2 segment_intersection
+                dup false eq {
+                    pop
+                } { 
+                    i_count intersections length ge {
+                        /new_list intersections length 2 mul array def
+                        intersections new_list copy pop
+                        /intersections new_list def
+                    } if
+                    intersections exch i_count exch put
+                    /i_count i_count 1 add def
+                } ifelse
+            } for
+        } for
+        intersections 0 i_count getinterval
+    end
+} def
