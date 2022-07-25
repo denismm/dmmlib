@@ -778,7 +778,7 @@ end
 /returnlines {
     boltdict begin
         false pathtolineslengthp
-        pathpoints
+        pathpoints 0 pathcount getinterval
     end
 } def
 
@@ -1024,7 +1024,6 @@ end
                         /oangle left_angle def /nangle right_angle def
                     } ifelse
                 } ifelse
-                [oangle nangle] ==
                 ox oy oangle nx ny nangle intersection /iy arg /ix arg
                 gsave newpath ix iy dot grestore
                 ix iy lineto

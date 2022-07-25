@@ -4,13 +4,15 @@
 
 /intersection_dict 10 dict def
 intersection_dict begin
-    /vertvert_intersection { /lowerline arg /upperline arg
-        upperline 0 get 1 get lowerline 1 get 1 get lt {
+    /overlap_1d { /coord arg /lowerline arg /upperline arg
+        upperline 0 get coord get lowerline 1 get coord get lt {
             upperline 0 get
         } {
             false
         } ifelse
     } def
+    /vertvert_intersection { 1 overlap_1d } def
+    /parallel_intersection { 0 overlap_1d } def
     /ymxb { /segment arg
         segment aload pop /s1 arg /s0 arg
         s0 aload pop /y0 arg /x0 arg
@@ -94,13 +96,24 @@ intersection_dict begin
                 aline ymxb /ab arg /am arg
                 bline ymxb /bb arg /bm arg
                 % algebra solve
-                /ix bb ab sub am bm sub div def
-                /iy am ix mul ab add def
-                % is it on both lines?
-                [ix iy] aline inbbox
-                [ix iy] bline inbbox and {
-                    [ix iy]
-                } { false } ifelse
+                am bm eq {
+                    ab bb eq {
+                        % find overlap using x
+                        aline 0 get 0 get bline 0 get 0 get gt {
+                            aline bline parallel_intersection
+                        } {
+                            bline aline parallel_intersection
+                        } ifelse
+                    } { false } ifelse
+                } {
+                    /ix bb ab sub am bm sub div def
+                    /iy am ix mul ab add def
+                    % is it on both lines?
+                    [ix iy] aline inbbox
+                    [ix iy] bline inbbox and {
+                        [ix iy]
+                    } { false } ifelse
+                } ifelse
             } ifelse
         } ifelse
     } def
