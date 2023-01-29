@@ -59,6 +59,10 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > **`-2.05`**
 
+*point* *range* **interpolate** *value*
+
+> Returns the value of f(point) for a function that has the values given in range for the integers and interpolates between those values for non-integer values. Points below 0 or above the length of range will return the first or last value in range. If you want to have a cycle of n values, range should be of length n + 1 and repeat the first value at the end, and point should be the result of `n mymod`.
+
 ### Geometry Operators
 
 *r* *q* *d* **circle_intersection** *a*
@@ -187,9 +191,17 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > Puts a dot at 0,0.
 
+*angle* **katebow** *r* *g* *b*
+
+> Convert an angle to the rgb equivalent around the "katebow" circle. This is based on interpolation between Kate Rose Morley's 12-bit rainbow, as defined at https://iamkate.com/data/12-bit-rainbow/ .
+
+*angle* **setkatebowcolor** *-*
+
+> Set the current color to the given angle around the katebow circle.
+
 *angle* **sinebow** *r* *g* *b*
 
-> Convert an angle to the rgb equivalent around the sinebow circle.
+> Convert an angle to the rgb equivalent around the sinebow circle.  See http://basecase.org/env/on-rainbows for more details about the sinebow.
 
 *angle* **setsinebowcolor** *-*
 
@@ -202,6 +214,8 @@ These are math functions that I use often enough to not want to constantly rewri
 *red green blue* **rgbfill** *-*
 
 *hue saturation brightness* **hsbfill** *-*
+
+*angle* **katebowfill** *-*
 
 *angle* **sinebowfill** *-*
 

@@ -43,14 +43,30 @@
     end
 } def
 
+/interpolate { 4 dict begin /range arg /point arg
+    point 0 ge {
+        point range length 1 sub lt {
+            /p point cvi def
+            /adjust point p sub def
+            % return range[p] + adjust * (range[p+1] - range[p])
+            range p get dup range p 1 add get exch sub adjust mul add
+        } {
+            range range length 1 sub get
+        } ifelse
+    }{
+        range 0 get
+    } ifelse
+    end
+} def
 
 /randint {rand exch cvi mod} def
 
-/randrange {
+/randrange { 3 dict begin
     /resolution arg
     /max arg
     /min arg
     max min sub resolution mul randint resolution div min add
+    end
 } def
 
 % curve analysis
@@ -347,15 +363,39 @@ end
 /hsbfill { gsave sethsbcolor fill grestore } def
 /whitefill { 1 grayfill } def
 
+% "sinebow" based on http://basecase.org/env/on-rainbows by Charlie Loyd
 /sinebow {
-    neg
-    dup cos exch
-    dup 120 add cos exch
-    120 sub cos
+    2 div
+    dup cos dup mul exch
+    dup 120 add cos dup mul exch
+    120 sub cos dup mul
 } def
 
 /setsinebowcolor { sinebow setrgbcolor } def
 /sinebowfill { gsave setsinebowcolor fill grestore } def
+
+% "katebow" colors based on "The 12-bit rainbow palette" by Kate Rose Morley
+% https://iamkate.com/data/12-bit-rainbow/
+
+/katebow_dict 10 dict def
+katebow_dict begin
+    /katebow_colors [
+        [8 10 12 14 14  9  4  2  0  0  3 6 8]
+        [1  3  6  9 13 13 13 12 11  9  6 3 1]
+        [7  5  6  4  0  5  8 11 12 12 11 9 7]
+    ] def
+end
+
+/katebow { /angle arg
+    katebow_dict begin
+        /k_index angle 360 mymod 30 div def
+        0 1 2 {
+            katebow_colors exch get k_index exch interpolate 15 div
+        } for
+    end
+} def
+/setkatebowcolor { katebow setrgbcolor } def
+/katebowfill { katebow rgbfill } def
 
 % render an eps file, given filename and bounding box, 
 % with ll at 0,0 and height of 1
