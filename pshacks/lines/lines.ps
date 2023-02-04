@@ -438,7 +438,7 @@ end
 
 /widthlist { /widths arg
     /width_n widths length def
-    {widths i width_n mod get} var_line
+    {widths i width_n mod get half} var_line
 } def
 /widthliststroke { widthlist fill } def
 /widthlistoutline { {widthlist} outline } def
