@@ -93,11 +93,12 @@ boltdict begin
 
         flattenpath
         /pathcount 0 def
+	/closed false def
         gsave
             { pop pop /pathcount pathcount 1 add def } % moveto
             { pop pop /pathcount pathcount 1 add def } % lineto
             { quit } % curveto
-            { /pathcount pathcount 1 add def } % closepath
+            { /pathcount pathcount 1 add def /closed true def} % closepath
 	    pathforall
         grestore
         % pathcount is number of points in line
@@ -283,8 +284,8 @@ end
             % determine miter and bevel points and directions
             0 1 pathcount 1 sub {
                 /i exch def
-                /l i 1 sub pathcount mymod cvi def
-                /n i 1 add pathcount mymod cvi def
+                /l i 0 eq { pathcount 2 sub } { i 1 sub } ifelse def
+                /n i pathcount 1 sub eq { 1 } { i 1 add } ifelse def
 
                 /cur_point pathpoints i get def
                 /x cur_point 0 get def
@@ -307,7 +308,7 @@ end
                 % effective line radius at this point
                 /linerad radfunc exec def
 
-                i 0 eq i pathcount 1 sub eq or {
+                i 0 eq i pathcount 1 sub eq or closed not and {
                     /lineout linerad def
                     i 0 eq {
                         /direction ndir 90 add def
@@ -434,6 +435,14 @@ end
 
 /bipointstroke { bipoint fill } def
 /bipointoutline { {bipoint} outline } def
+
+/widthlist { /widths arg
+    /width_n widths length def
+    {widths i width_n mod get} var_line
+} def
+/widthliststroke { widthlist fill } def
+/widthlistoutline { {widthlist} outline } def
+
 
 /calligraphic {
     boltdict begin
