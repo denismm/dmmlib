@@ -270,6 +270,13 @@ A library for drawing lines differently.  More information can be found at
 > sets the linewidth to 0 at the start and end, leaving it alone otherwise.
 > The three operators follow the same pattern as **bolt** and family.
 
+*widths* **widthlist, widthliststroke, widthlistoutline**
+
+> Replacement for **stroke** that calls **var_line** with a function that
+> sets the linewidth to each successive value of *widths*, given as the
+> last argument to the function.
+> The three operators follow the same pattern as **bolt** and family.
+
 *spline_offset* **calligraphic** *-*
 
 > Replaces the current path, which can't contain internal **moveto** operators,
