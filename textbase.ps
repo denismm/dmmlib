@@ -69,6 +69,28 @@ end
     end
 } def
 
+/multiline_width_show {
+    layout_dict begin
+        /show_func arg
+        /height arg
+        /linewidth arg
+        /lines arg
+        /allwidth 0 def
+        lines {
+            stringwidth pop allwidth maximum /allwidth arg
+        } forall
+        gsave
+	    allwidth linewidth gt {
+		linewidth allwidth div 1 scale
+	    } if
+            lines {
+                show_func
+                0 height neg translate
+            } forall
+        grestore
+    end
+} def
+
 /width_height_line_show {
     % as above but scale instead of compressing
     layout_dict begin
