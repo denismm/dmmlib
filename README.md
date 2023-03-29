@@ -368,11 +368,18 @@ Text manipulation and display functions.
 > **Show** the string with a baseline at y=0.  The string will have its
 > left, right, or center at x=0.
 
-*string num proc* **width_line_show** *-*
+*string width proc* **width_line_show** *-*
 
 > Call the proc (which should be one of the **_base_show** family above or
 > similar) to show the string, using scale to compress the line horizontally
 > if necessary to keep it within the given width.
+
+*strings width height proc* **multiline_width_show** *-*
+
+> Call the proc (which should be one of the **_base_show** family above or
+> similar) to show each string in strings, using scale to compress the lines
+> horizontally if necessary to keep it within the given width.  All the lines
+> will be compressed by the same amount.
 
 *string num proc* **width_line_show** *-*
 
