@@ -1,11 +1,88 @@
 %!
 
+/arg { exch def } def
+
+/safe_func_dict_dict 20 dict def
+
+% /foo [/x /y /z] { x dup mul y dup mul z dup mul add add } 1 /new dict_safe_func
+/dict_safe_func {
+    /function_dictionary arg
+    /returns arg
+    /function_body exch cvlit def
+    /arguments arg
+    /function_name arg
+
+    /func_local_dict <<
+        /arguments arguments 
+        /local_function_body function_body 
+        /function_dictionary function_dictionary 
+        /function_name function_name 
+        /returns returns 
+    >> def
+    safe_func_dict_dict function_name func_local_dict put
+
+    /standard_function_body {
+        % get data out of fake closure dictionary
+        safe_func_dict_dict exch get /func_local_dict arg
+        func_local_dict begin
+
+        % set a sentinel, roll above args
+        /sentinel (sentinel          ) def
+        sentinel 7 10 getinterval rand exch cvs pop
+        /sentinel sentinel cvn def
+        sentinel arguments length 1 add 1 roll
+        % enter dictionary
+        function_dictionary /new eq {
+            /function_dictionary 10 dict def
+        } if
+        function_dictionary false ne {
+            function_dictionary begin
+        } if
+        % define args
+        arguments length 1 sub -1 0 {
+            arguments exch get arg
+        } for
+        % run body
+        func_local_dict /local_function_body get cvx exec
+        % roll for returns
+        returns 1 add -1 roll
+        % check sentinel
+        dup sentinel eq {
+            pop
+        } {
+            pstack
+            (sentinel not in place) die
+        } ifelse
+        function_dictionary false ne {
+            % check dictionary
+            currentdict function_dictionary ne {
+                countdictstack ==
+                (wrong dictionary!) die
+            } if
+            % leave dictionary
+            end
+        } if
+        currentdict func_local_dict ne {
+            countdictstack ==
+            (where is closure dictionary?!) die
+        } if
+        end %func_local_dict
+        currentdict /func_local_dict undef
+    } def
+    func_local_dict /new_function_body [
+        function_name /standard_function_body cvx
+    ] put
+    func_local_dict /new_function_body get 0 function_name put
+    func_local_dict /new_function_body get cvx function_name arg
+} def
+
+/safefunc { /new dict_safe_func } def
+/simplefunc { 0 /new dict_safe_func } def
+
 /circle { 0 360 arc closepath } def
 
 /dot { currentlinewidth 1.5 mul circle fill } def
 /doot { 0 0 dot } def
-
-/arg { exch def } def
 
 % define if not known
 /defaultdef {
