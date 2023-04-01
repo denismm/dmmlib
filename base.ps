@@ -2,7 +2,21 @@
 
 /arg { exch def } def
 
-/safe_func_dict_dict 20 dict def
+% define if not known
+/defaultdef {
+    % name definition
+    exch
+    % definition name
+    dup where {
+        % definition name dict
+        pop pop pop
+    } {
+        % definition name
+        exch def
+    } ifelse
+} def
+
+/safe_func_dict_dict 20 dict defaultdef
 
 % /foo [/x /y /z] { x dup mul y dup mul z dup mul add add } 1 /new dict_safe_func
 /dict_safe_func {
@@ -58,14 +72,16 @@
             % check dictionary
             currentdict function_dictionary ne {
                 countdictstack ==
-                (wrong dictionary!) die
+                (wrong dictionary!) ==
+                die
             } if
             % leave dictionary
             end
         } if
         currentdict func_local_dict ne {
             countdictstack ==
-            (where is closure dictionary?!) die
+            (where is closure dictionary?!) ==
+            die
         } if
         end %func_local_dict
         currentdict /func_local_dict undef
@@ -84,20 +100,6 @@
 
 /dot { currentlinewidth 1.5 mul circle fill } def
 /doot { 0 0 dot } def
-
-% define if not known
-/defaultdef {
-    % name definition
-    exch
-    % definition name
-    dup where {
-        % definition name dict
-        pop pop pop
-    } {
-        % definition name
-        exch def
-    } ifelse
-} def
 
 /recip { 1 exch div } def
 /maximum { 2 copy gt { pop } { exch pop } ifelse } def
