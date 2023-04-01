@@ -28,7 +28,7 @@
 
         % set a sentinel, roll above args
         /sentinel (sentinel          ) def
-        sentinel 7 10 getinterval rand exch cvs pop
+        sentinel 8 10 getinterval rand exch cvs pop
         /sentinel sentinel cvn def
         sentinel arguments length 1 add 1 roll
         % enter dictionary
@@ -51,7 +51,8 @@
             pop
         } {
             pstack
-            (sentinel not in place) die
+            [(sentinel not in place for) function_name] ==
+            die
         } ifelse
         function_dictionary false ne {
             % check dictionary
@@ -136,15 +137,11 @@
     end
 } def
 
-/randint {rand exch cvi mod} def
+/randint [/range] {rand range cvi mod} 1 safefunc
 
-/randrange { 3 dict begin
-    /resolution arg
-    /max arg
-    /min arg
+/randrange [/min /max /resolution] {
     max min sub resolution mul randint resolution div min add
-    end
-} def
+} 1 safefunc
 
 % curve analysis
 /lcurveto_dict 8 dict def
@@ -232,17 +229,8 @@ end
 % dsvgarc: debug, show origin
 
 ellipsedict begin
-    /svgarc_base {
-        /debug arg
-        /spline arg
-        /relative arg
-        /ny arg
-        /nx arg
-        /sweep arg
-        /large arg
-        /xrot arg
-        /yrad arg
-        /xrad arg
+    /svgarc_base 
+    [/xrad /yrad /xrot /large /sweep /nx /ny /relative /spline /debug] {
 
         % save current ref frame
         /originalmatrix matrix currentmatrix def
@@ -251,6 +239,9 @@ ellipsedict begin
         /tempmatrix matrix def
 
         /ntrans {
+            % copy of tempmatrix is already on stack
+            pop
+            % nx and ny need to be where they'll be in the new situation
             nx ny tempmatrix itransform /ny arg /nx arg
             tempmatrix concat
         } def
@@ -308,7 +299,7 @@ ellipsedict begin
 
         % return to original ref frame
         originalmatrix setmatrix
-    } def
+    } 0 ellipsedict dict_safe_func
 end
 
 /svgarc {ellipsedict begin false false false svgarc_base end} def
