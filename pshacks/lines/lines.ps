@@ -274,142 +274,138 @@ end
 
 % line of varying widths, using only lineto
 % call with function that determines "line radius" (1/2 thickness)
-/var_line {
-    boltdict begin
-	/radfunc exch def
+/var_line [/radfunc] {
+    pathtolines
 
-	pathtolines
+    linelen 0 gt {
 
-        linelen 0 gt {
+        % determine miter and bevel points and directions
+        0 1 pathcount 1 sub {
+            /i exch def
+            /l i 0 eq { pathcount 2 sub } { i 1 sub } ifelse def
+            /n i pathcount 1 sub eq { 1 } { i 1 add } ifelse def
 
-            % determine miter and bevel points and directions
-            0 1 pathcount 1 sub {
-                /i exch def
-                /l i 0 eq { pathcount 2 sub } { i 1 sub } ifelse def
-                /n i pathcount 1 sub eq { 1 } { i 1 add } ifelse def
+            /cur_point pathpoints i get def
+            /x cur_point 0 get def
+            /y cur_point 1 get def
+            /dist cur_point 2 get def
 
-                /cur_point pathpoints i get def
-                /x cur_point 0 get def
-                /y cur_point 1 get def
-                /dist cur_point 2 get def
+            /next_point pathpoints n get def
+            /nx next_point 0 get def
+            /ny next_point 1 get def
+            /ndir ny y sub nx x sub myatan def
 
-                /next_point pathpoints n get def
-                /nx next_point 0 get def
-                /ny next_point 1 get def
-                /ndir ny y sub nx x sub myatan def
+            /last_point pathpoints l get def
+            /lx last_point 0 get def
+            /ly last_point 1 get def
+            /ldir ly y sub lx x sub myatan def
 
-                /last_point pathpoints l get def
-                /lx last_point 0 get def
-                /ly last_point 1 get def
-                /ldir ly y sub lx x sub myatan def
+            /bevel false def
+            /direction_2 0 def
 
-                /bevel false def
-                /direction_2 0 def
+            % effective line radius at this point
+            /linerad radfunc exec def
 
-                % effective line radius at this point
-                /linerad radfunc exec def
-
-                i 0 eq i pathcount 1 sub eq or closed not and {
-                    /lineout linerad def
-                    i 0 eq {
-                        /direction ndir 90 add def
-                        currentlinecap 2 eq {
-                            /x x ndir cos neg lineout mul add def
-                            /y y ndir sin neg lineout mul add def
-                        } if
-                    } {
-                        /direction ldir 90 sub def
-                        currentlinecap 2 eq {
-                            /x x ldir cos neg lineout mul add def
-                            /y y ldir sin neg lineout mul add def
-                        } if
-                    } ifelse
-                    /direction_2 direction def
-                } {
-                    /theta ndir ldir sub def
-                    theta 0 lt {
-                        /theta theta 360 add def
-                    } if
-                    /phi 90 theta 2 div sub def
-                    % actual distance to junction point
-                    phi cos 0 eq {
-                        /lineout 0 def
-                    } {
-                        /lineout linerad phi cos div def
-                    } ifelse
-                    % direction to junction point
-                    /direction ndir 90 add phi add def
-                    0 currentlinejoin ne
-                    lineout linerad zdiv currentmiterlimit gt or {
-                        /bevel true def
-                        /lineout linerad def
-                        /direction ldir 90 sub 360 mymod def
-                        /direction_2 ndir 90 add 360 mymod def
-                        i pathcount 1 sub eq {
-                            /bevel false def
-                        } if
-                    } {
-                        /direction_2 direction def
-                    } ifelse
-                } ifelse
-                pathpoints i [x y dist /l direction lineout bevel direction_2] put
-            } for
-
-            % draw line
-            newpath
-            % side 1
-            0 1 pathcount 1 sub {
-                /i exch def
-                /cur_point pathpoints i get def
-                /x cur_point 0 get def
-                /y cur_point 1 get def
-                /direction cur_point 4 get def
-                /lineout cur_point 5 get def
-                /bevel cur_point 6 get def
-                /direction_2 cur_point 7 get def
-                x direction cos lineout mul add
-                y direction sin lineout mul add
+            i 0 eq i pathcount 1 sub eq or closed not and {
+                /lineout linerad def
                 i 0 eq {
-                    moveto
+                    /direction ndir 90 add def
+                    currentlinecap 2 eq {
+                        /x x ndir cos neg lineout mul add def
+                        /y y ndir sin neg lineout mul add def
+                    } if
                 } {
-                    lineto
+                    /direction ldir 90 sub def
+                    currentlinecap 2 eq {
+                        /x x ldir cos neg lineout mul add def
+                        /y y ldir sin neg lineout mul add def
+                    } if
                 } ifelse
-                bevel {
-                    true drawbevel
-                } if
-            } for
-            % end circle as needed
-            currentlinecap 1 eq {
-                x y lineout direction direction 180 add arcn
+                /direction_2 direction def
             } {
-                /direction direction 180 add def
-                x direction cos lineout mul add
-                y direction sin lineout mul add
+                /theta ndir ldir sub def
+                theta 0 lt {
+                    /theta theta 360 add def
+                } if
+                /phi 90 theta 2 div sub def
+                % actual distance to junction point
+                phi cos 0 eq {
+                    /lineout 0 def
+                } {
+                    /lineout linerad phi cos div def
+                } ifelse
+                % direction to junction point
+                /direction ndir 90 add phi add def
+                0 currentlinejoin ne
+                lineout linerad zdiv currentmiterlimit gt or {
+                    /bevel true def
+                    /lineout linerad def
+                    /direction ldir 90 sub 360 mymod def
+                    /direction_2 ndir 90 add 360 mymod def
+                    i pathcount 1 sub eq {
+                        /bevel false def
+                    } if
+                } {
+                    /direction_2 direction def
+                } ifelse
+            } ifelse
+            pathpoints i [x y dist /l direction lineout bevel direction_2] put
+        } for
+
+        % draw line
+        newpath
+        % side 1
+        0 1 pathcount 1 sub {
+            /i exch def
+            /cur_point pathpoints i get def
+            /x cur_point 0 get def
+            /y cur_point 1 get def
+            /direction cur_point 4 get def
+            /lineout cur_point 5 get def
+            /bevel cur_point 6 get def
+            /direction_2 cur_point 7 get def
+            x direction cos lineout mul add
+            y direction sin lineout mul add
+            i 0 eq {
+                moveto
+            } {
                 lineto
             } ifelse
-            % side 2
-            pathcount 2 sub -1 0 {
-                /i exch def
-                /cur_point pathpoints i get def
-                /x cur_point 0 get def
-                /y cur_point 1 get def
-                /direction cur_point 4 get 180 add def
-                /lineout cur_point 5 get def
-                /bevel cur_point 6 get def
-                /direction_2 cur_point 7 get 180 add def
-                x direction_2 cos lineout mul add
-                y direction_2 sin lineout mul add
-                lineto
-                bevel { false drawbevel } if
-            } for
-            % start circle if needed
-            currentlinecap 1 eq {
-                x y lineout direction direction 180 add arcn
+            bevel {
+                true drawbevel
             } if
-            closepath
+        } for
+        % end circle as needed
+        currentlinecap 1 eq {
+            x y lineout direction direction 180 add arcn
+        } {
+            /direction direction 180 add def
+            x direction cos lineout mul add
+            y direction sin lineout mul add
+            lineto
+        } ifelse
+        % side 2
+        pathcount 2 sub -1 0 {
+            /i exch def
+            /cur_point pathpoints i get def
+            /x cur_point 0 get def
+            /y cur_point 1 get def
+            /direction cur_point 4 get 180 add def
+            /lineout cur_point 5 get def
+            /bevel cur_point 6 get def
+            /direction_2 cur_point 7 get 180 add def
+            x direction_2 cos lineout mul add
+            y direction_2 sin lineout mul add
+            lineto
+            bevel { false drawbevel } if
+        } for
+        % start circle if needed
+        currentlinecap 1 eq {
+            x y lineout direction direction 180 add arcn
         } if
-    end
-} def
+        closepath
+    } if
+} 0 boltdict dict_safe_func
 
 /outline {
     boltdict begin
