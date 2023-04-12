@@ -31,8 +31,8 @@
 	/modulus exch def
 	/original exch def
 	original 0 lt original modulus ge or {
-	    original modulus div floor neg 
-	    modulus mul original add 
+	    original modulus div floor neg
+	    modulus mul original add
 	    /original exch def
 	} if
 	original
@@ -107,7 +107,7 @@ boltdict begin
 	/i 0 def
 	/x 0 def /y 0 def /linelen 0 def
         /addpoint {
-            pathpoints i [x y 
+            pathpoints i [x y
                 include_length {
                     linelen /p
                 } if
@@ -229,7 +229,7 @@ boltdict begin
 	    addline
 	}
 	% curve
-	{ 
+	{
 	    i 0 eq {quit} if
 	    addcurve
 	}
@@ -277,7 +277,7 @@ end
 % add entries to pathpoints array.
 /pathparser {
     % determine actual points for drawing
-    % place direction and distance to actual point 
+    % place direction and distance to actual point
     %     into pathpoints entries, fields 4 and 5
     % determine miter and bevel points and directions
     0 1 pathcount 1 sub {
@@ -301,7 +301,7 @@ end
         /lx last_point 0 get def
         /ly last_point 1 get def
         /ldir ly y sub lx x sub myatan def
-        
+
         /bevel false def
         /direction_2 0 def
         % effective line radius at this point
@@ -353,9 +353,9 @@ end
             } if
         } ifelse
         pathpoints i bevel {
-            [x y dist ptype direction lineout bevel direction_2] 
+            [x y dist ptype direction lineout bevel direction_2]
         } {
-            [x y dist ptype direction lineout bevel direction] 
+            [x y dist ptype direction lineout bevel direction]
         } ifelse put
     } for
 } def
@@ -370,29 +370,41 @@ end
 
         % draw line
         newpath
-        % side 1
-        0 1 pathcount 1 sub {
-            /i exch def
+
+        /loadpoint { /i arg
             /cur_point pathpoints i get def
             /x cur_point 0 get def
             /y cur_point 1 get def
+            /ptype cur_point 3 get def
             /direction cur_point 4 get def
             /lineout cur_point 5 get def
             /bevel cur_point 6 get def
             /direction_2 cur_point 7 get def
+        } def
+        % side 1
+        /ptype false def
+        0 1 pathcount 1 sub { /i arg
+            /last_ptype ptype def
+            i loadpoint
             x direction cos lineout mul add
             y direction sin lineout mul add
             i 0 eq {
                 moveto
             } {
-                lineto
+                ptype /p eq {
+                    last_ptype /c eq {
+                        curveto
+                    } {
+                        lineto
+                    } ifelse
+                } if
             } ifelse
             bevel {
                 true drawbevel
             } if
         } for
         % end circle as needed
-        currentlinecap 1 eq {
+        currentlinecap 1 eq closed not and {
             x y lineout direction direction 180 add arcn
         } {
             /direction direction 180 add def
@@ -403,20 +415,22 @@ end
         % side 2
         pathcount 2 sub -1 0 {
             /i exch def
-            /cur_point pathpoints i get def
-            /x cur_point 0 get def
-            /y cur_point 1 get def
-            /direction cur_point 4 get 180 add def
-            /lineout cur_point 5 get def
-            /bevel cur_point 6 get def
-            /direction_2 cur_point 7 get 180 add def
+            i loadpoint
+            /direction direction 180 add def
+            /direction_2 direction_2 180 add def
             x direction_2 cos lineout mul add
             y direction_2 sin lineout mul add
-            lineto
+            ptype /p eq {
+                last_ptype /c eq {
+                    curveto
+                } {
+                    lineto
+                } ifelse
+            } if
             bevel { false drawbevel } if
         } for
         % start circle if needed
-        currentlinecap 1 eq {
+        currentlinecap 1 eq closed not and {
             x y lineout direction direction 180 add arcn
         } if
         closepath
@@ -435,7 +449,7 @@ end
 
     pathcount 1 gt {
         pathparser
-        
+
         % draw actual path
         newpath
 
@@ -450,31 +464,31 @@ end
             /direction_2 cur_point 7 get def
         } def
 
-        % starting point
-        0 loadpoint
-        x direction cos lineout mul add
-        y direction sin lineout mul add
-        moveto
-        bevel {
-            true drawbevel
-        } if
-
-        % lines from 1 to N
-        1 1 pathcount 1 sub { /i arg
+        % side 1 of path from 0 to N
+        /ptype false def
+        0 1 pathcount 1 sub { /i arg
             /last_ptype ptype def
             i loadpoint
             x direction cos lineout mul add
             y direction sin lineout mul add
-            ptype /p eq last_ptype /c eq and {
-                curveto
-            } if 
+            i 0 eq {
+                moveto
+            } {
+                ptype /p eq {
+                    last_ptype /c eq {
+                        curveto
+                    } {
+                        lineto
+                    } ifelse
+                } if
+            } ifelse
             bevel {
                 true drawbevel
             } if
         } for
 
         % move to starting point of the line back,
-        %     adding circle at end if necessary 
+        %     adding circle at end if necessary
         % even if beveled, direction_1 is appropriate
         currentlinecap 1 eq closed not and {
             x y lineout direction direction 180 add arcn
@@ -485,25 +499,22 @@ end
             lineto
         } ifelse
 
-        % lines back
+        % side 2 of path from N-1 to 0
         pathcount 2 sub -1 0 {
             /i exch def
-            /cur_point pathpoints i get def
-            /x cur_point 0 get def
-            /y cur_point 1 get def
-            /ptype cur_point 3 get def
-            /direction cur_point 4 get 180 add def
-            /lineout cur_point 5 get def
-            /bevel cur_point 6 get def
-            /direction_2 cur_point 7 get 180 add def
+            i loadpoint
+            /direction direction 180 add def
+            /direction_2 direction_2 180 add def
             x direction_2 cos lineout mul add
             y direction_2 sin lineout mul add
             ptype /p eq {
-                curveto
-            } if 
-            bevel {
-                false drawbevel
-            }  if
+                last_ptype /c eq {
+                    curveto
+                } {
+                    lineto
+                } ifelse
+            } if
+            bevel { false drawbevel } if
         } for
 
         % circle at end if necessary
@@ -557,7 +568,7 @@ end
 	setlinewidth
 	stroke
     grestore
-    newpath 
+    newpath
 } def
 
 /spindly { 0 calligraphic } def
@@ -601,7 +612,7 @@ end
 	a1 rotate
 	1 0
 	curr_path {
-	    currentpoint pop 1 sub abs currentlinewidth 10 div lt 
+	    currentpoint pop 1 sub abs currentlinewidth 10 div lt
 	    currentpoint exch pop 0 sub abs currentlinewidth 10 div lt and
 	    {
 		pop pop
@@ -884,7 +895,7 @@ end
                     closed_path {
                         /prev_i prev_i pathcount 1 sub mymod def
                         /next_i next_i pathcount 1 sub mymod def
-                    } { 
+                    } {
                         prev_i 0 lt { /prev_i i def } if
                         next_i pathcount 2 sub gt { /next_i i def } if
                     } ifelse
@@ -894,16 +905,16 @@ end
                     /next_bend next_angle line_angle sub 360 mymod def
                     /prev_dir
                         prev_bend 0 eq { 0 } {
-                            prev_bend 180 gt 
-                                { -1 } 
+                            prev_bend 180 gt
+                                { -1 }
                                 { prev_bend 180 lt { 1 } { 0 } ifelse }
                             ifelse
                         } ifelse
                     def
                     /next_dir
                         next_bend 0 eq { 0 } {
-                            next_bend 180 gt 
-                                { -1 } 
+                            next_bend 180 gt
+                                { -1 }
                                 { next_bend 180 lt { 1 } { 0 } ifelse }
                             ifelse
                         } ifelse
