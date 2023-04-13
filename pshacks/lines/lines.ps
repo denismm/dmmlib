@@ -272,7 +272,7 @@ boltdict begin
     } def
 
     % expects to be run after pathtolines or pathtocurves.
-    % expect radfunc to be defined.
+    % expects radfunc to be defined.
     % add entries to pathpoints array.
     /pathparser {
         % determine actual points for drawing
@@ -379,12 +379,20 @@ boltdict begin
 
             % side 1 of path from 0 to N
             /ptype false def
-            0 1 pathcount 1 sub { /i arg
+
+            /drawsegment { /forward arg
                 /last_ptype ptype def
                 i loadpoint
-                x direction cos lineout mul add
-                y direction sin lineout mul add
-                i 0 eq {
+                forward {
+                    x direction cos lineout mul add
+                    y direction sin lineout mul add
+                } {
+                    /direction direction 180 add def
+                    /direction_2 direction_2 180 add def
+                    x direction_2 cos lineout mul add
+                    y direction_2 sin lineout mul add
+                } ifelse
+                last_ptype false eq {
                     moveto
                 } {
                     ptype /p eq {
@@ -395,9 +403,11 @@ boltdict begin
                         } ifelse
                     } if
                 } ifelse
-                bevel {
-                    true drawbevel
-                } if
+                bevel { false drawbevel } if
+            } def
+
+            0 1 pathcount 1 sub { /i arg
+                true drawsegment
             } for
 
             % move to starting point of the line back,
@@ -413,21 +423,9 @@ boltdict begin
             } ifelse
 
             % side 2 of path from N-1 to 0
-            pathcount 2 sub -1 0 {
-                /i exch def
-                i loadpoint
-                /direction direction 180 add def
-                /direction_2 direction_2 180 add def
-                x direction_2 cos lineout mul add
-                y direction_2 sin lineout mul add
-                ptype /p eq {
-                    last_ptype /c eq {
-                        curveto
-                    } {
-                        lineto
-                    } ifelse
-                } if
-                bevel { false drawbevel } if
+            % last_ptype
+            pathcount 2 sub -1 0 { /i arg
+                false drawsegment
             } for
 
             % circle at end if necessary
