@@ -87,12 +87,50 @@
 
 
 boltdict begin
+    /curvepath {
+        /addstraightcurve { /ny arg /nx arg
+            oldx 2 mul 3 div nx 3 div add  oldy 2 mul 3 div ny 3 div add
+            oldx 3 div nx 2 mul 3 div add  oldy 3 div ny 2 mul 3 div add
+            nx ny
+            /curveto cvx
+        } def
+        [
+            {
+                /y arg /x arg
+                /startx x def /starty y def
+                x y
+                /moveto cvx
+                /oldx x def /oldy y def
+            }
+            {
+                /y arg /x arg
+                x y addstraightcurve
+                /oldx x def /oldy y def
+            }
+            {
+                /y3 arg /x3 arg
+                /y2 arg /x2 arg
+                /y1 arg /x1 arg
+                x1 y1 x2 y2 x3 y3
+                /curveto cvx
+                /oldx x3 def /oldy y3 def
+            }
+            {
+                startx starty addstraightcurve
+                /closepath cvx
+                /oldx startx def /oldy starty def
+            }
+            pathforall
+        ]
+        newpath
+        cvx exec
+    } def
+
     /pathtolineslengthp { /include_length arg
 	% analyze current path, creating pathpoints array
 	% turn all curves into lines
 	% pathpoints format: [x y lengthsofar /p] if include_length
 
-        flattenpath
         /pathcount 0 def
 	/closed false def
         gsave
@@ -160,9 +198,9 @@ boltdict begin
 	/closed false def
         gsave
             { 2 {pop} repeat /pathcount pathcount 1 add def } % moveto
-            { 2 {pop} repeat /pathcount pathcount 3 add def } % lineto
+            { 2 {pop} repeat /pathcount pathcount 1 add def } % lineto
             { 6 {pop} repeat /pathcount pathcount 3 add def } %curveto
-            { /pathcount pathcount 3 add def /closed true def } % closepath
+            { /pathcount pathcount 1 add def /closed true def } % closepath
 	    pathforall
         grestore
         % pathcount is number of points in line
@@ -206,15 +244,6 @@ boltdict begin
 	    } ifelse
 	} def
 
-	/addline {
-	    /ny exch def /nx exch def
-	    % create fake control points
-	    x 2 mul 3 div nx 3 div add  y 2 mul 3 div ny 3 div add
-	    x 3 div nx 2 mul 3 div add  y 3 div ny 2 mul 3 div add
-	    nx ny
-	    addcurve
-	} def
-
 	% args to pathforall
 	% moveto
 	{
@@ -239,7 +268,11 @@ boltdict begin
 	    /closed true def
 	    /ny pathpoints 0 get 1 get def
 	    /nx pathpoints 0 get 0 get def
-	    nx ny addline
+            nx x eq ny y eq and not {
+                nx ny addline
+            } {
+		/pathcount pathcount 1 sub def
+            } ifelse
 	} pathforall
     } def
 
@@ -442,6 +475,7 @@ end
 /var_line [/radfunc] {
 
     % analyze path as lines, put into pathpoints array
+    flattenpath
     pathtolines
 
     pathengine
@@ -450,6 +484,9 @@ end
 
 
 /calligraphic [/spline_offset] {
+
+    % turn all lines and closepaths to curves
+    curvepath
 
     % analyze path, moving points into pathpoints array
     pathtocurves
@@ -665,8 +702,11 @@ end
 
 /returnlines {
     boltdict begin
-        false pathtolineslengthp
-        pathpoints 0 pathcount getinterval
+        gsave
+            flattenpath
+            false pathtolineslengthp
+            pathpoints 0 pathcount getinterval
+        grestore
     end
 } def
 
