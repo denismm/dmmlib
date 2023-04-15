@@ -86,47 +86,47 @@
 } def
 
 
-boltdict begin
-    /curvepath {
-        % change all lines into 4-point curves
-        /addstraightcurve { /ny arg /nx arg
-            oldx 2 mul 3 div nx 3 div add  oldy 2 mul 3 div ny 3 div add
-            oldx 3 div nx 2 mul 3 div add  oldy 3 div ny 2 mul 3 div add
-            nx ny
-            /curveto cvx
-        } def
-        [
-            {
-                /y arg /x arg
-                /startx x def /starty y def
-                x y
-                /moveto cvx
-                /oldx x def /oldy y def
-            }
-            {
-                /y arg /x arg
-                x y addstraightcurve
-                /oldx x def /oldy y def
-            }
-            {
-                /y3 arg /x3 arg
-                /y2 arg /x2 arg
-                /y1 arg /x1 arg
-                x1 y1 x2 y2 x3 y3
-                /curveto cvx
-                /oldx x3 def /oldy y3 def
-            }
-            {
-                startx starty addstraightcurve
-                /closepath cvx
-                /oldx startx def /oldy starty def
-            }
-            pathforall
-        ]
-        newpath
-        cvx exec
+/curvepath {
+    % change all lines into 4-point curves
+    /addstraightcurve { /ny arg /nx arg
+        oldx 2 mul 3 div nx 3 div add  oldy 2 mul 3 div ny 3 div add
+        oldx 3 div nx 2 mul 3 div add  oldy 3 div ny 2 mul 3 div add
+        nx ny
+        /curveto cvx
     } def
+    [
+        {
+            /y arg /x arg
+            /startx x def /starty y def
+            x y
+            /moveto cvx
+            /oldx x def /oldy y def
+        }
+        {
+            /y arg /x arg
+            x y addstraightcurve
+            /oldx x def /oldy y def
+        }
+        {
+            /y3 arg /x3 arg
+            /y2 arg /x2 arg
+            /y1 arg /x1 arg
+            x1 y1 x2 y2 x3 y3
+            /curveto cvx
+            /oldx x3 def /oldy y3 def
+        }
+        {
+            startx starty addstraightcurve
+            /closepath cvx
+            /oldx startx def /oldy starty def
+        }
+        pathforall
+    ]
+    newpath
+    cvx exec
+} def
 
+boltdict begin
     /pathtopoints { /include_length arg
         % analyze current path, creating pathpoints array
         % pathpoints format: [x y lengthsofar ptype]

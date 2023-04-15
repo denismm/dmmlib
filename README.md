@@ -31,13 +31,13 @@ Base provides generally useful functions.
 ### Arithmetic and Math Operators
 These are math functions that I use often enough to not want to constantly rewrite.
 
-*int* **recip** *reciprocal*
+*num* **recip** *reciprocal*
 
-*int int* **maximum** *max*
+*num num* **maximum** *max*
 
-*int int* **minimum** *min*
+*num num* **minimum** *min*
 
-*int* **half** *int*
+*num* **half** *num*
 
 *num num* **mymod** *remainder*
 
@@ -237,20 +237,25 @@ These are math functions that I use often enough to not want to constantly rewri
 A library for drawing lines differently.  More information can be found at
 [Alternate line styles in Postscript](http://suberic.net/~dmm/graphics/lines/lines.html).
 
-*proc* **var_line** *-*
+*proc* **var_path** *-*
 
 > Replaces the current path, which can't contain internal **moveto** operators,
 > with an outline of a variable-width stroke of that path.
 > Respects linecap, linejoin, and miterlimit settings.
 > The proc must return half of the desired line thickness at every point 
-> (any point mentioned in
-> **moveto** or **lineto** after **flattenpath** is called to remove curves) 
-> based on internal variables in **var_line**.  Useful variables:
+> based on internal variables in **var_path**.  Possibly useful variables:
 
 *   i: position along the array of points
 *   pathcount: length of the array of points
 *   dist: current position along the length of the path
 *   linelen: length of the entire path
+*   x, y: position of the point in the current reference frame
+*   ptype: /p for most points, /c for control points of a curveto
+
+*proc* **var_line** *-*
+
+> A version of **var_path** that calls **flattenpath** before running
+> the path engine.  All points will be of ptype /p.
 
 **bolt, boltstroke**
 
@@ -263,6 +268,11 @@ A library for drawing lines differently.  More information can be found at
 > that path, making it a full replacement for stroke.  **boltoutline**
 > strokes the outline and takes an argument which is the thickness of the
 > outline.  The linewidth setting is not changed as a result of the call.
+
+**taper, taperstroke, taperoutline**
+
+> Like **bolt** etc. but doesn't call **flattenpath**, so may give different
+> results for curves and arcs.
 
 **bipoint, bipointstroke, bipointoutline**
 
@@ -277,6 +287,13 @@ A library for drawing lines differently.  More information can be found at
 > last argument to the function.
 > The three operators follow the same pattern as **bolt** and family.
 
+*-* **curvepath** *-*
+
+> The opposite of **flattenpath**.  Replaces the current path - curveto
+> instructions are ignored but lineto instructions and the line portion
+> of closepath instructions are replaced with a curveto with control points
+> 1/3 and 2/3 of the way along the segment.  Helpful for calligraphic, below.
+
 *spline_offset* **calligraphic** *-*
 
 > Replaces the current path, which can't contain internal **moveto** operators,
@@ -287,6 +304,10 @@ A library for drawing lines differently.  More information can be found at
 > thin segments are, in a not easily describable way - 0 will make a straight
 > line get as thin as 1/4 the base thickness, 1 will look like a normal stroke
 > for straight lines.  See the lines.html web page for more details.
+
+> This also uses var_path under the covers, after calling **curvepath** - the
+> function it supplies is 
+> `currentlinewidth 2 div ptype /c eq { spline_offset mul } if`.
 
 *spline_offset* **callistroke** *-*
 
@@ -381,7 +402,7 @@ Text manipulation and display functions.
 > horizontally if necessary to keep it within the given width.  All the lines
 > will be compressed by the same amount.
 
-*string num proc* **width_line_show** *-*
+*string num proc* **width_height_line_show** *-*
 
 > As **width_line_show** but scale the text in both dimensions 
 > rather than compressing.
