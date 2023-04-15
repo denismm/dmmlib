@@ -436,6 +436,19 @@ end
 
 } 0 boltdict dict_safe_func
 
+% line of varying widths
+% call with function that determines "line radius" (1/2 thickness)
+/var_path [/radfunc] {
+
+    % drop tiny mistake segments
+    shavepath
+
+    % analyze path, put into pathpoints array
+    true pathtopoints
+
+    pathengine
+
+} 0 boltdict dict_safe_func
 
 /calligraphic [/spline_offset] {
 
@@ -490,6 +503,12 @@ end
 } def
 /widthliststroke { widthlist fill } def
 /widthlistoutline { {widthlist} outline } def
+
+/taper {
+    { dist linelen div 1 exch sub currentlinewidth mul 2 div } var_path
+} def
+/taperstroke { taper fill } def
+/taperoutline { {taper} outline } def
 
 % call with a number argument: thickness of control points
 /callistroke { calligraphic fill } def
