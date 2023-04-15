@@ -28,23 +28,23 @@
 /mod_dict 2 dict def
 /mymod {
     mod_dict begin
-	/modulus exch def
-	/original exch def
-	original 0 lt original modulus ge or {
-	    original modulus div floor neg
-	    modulus mul original add
-	    /original exch def
-	} if
-	original
+        /modulus exch def
+        /original exch def
+        original 0 lt original modulus ge or {
+            original modulus div floor neg
+            modulus mul original add
+            /original exch def
+        } if
+        original
     end
 } def
 
 % allow division by zero
 /zdiv {
     dup 0 eq {
-	pop pop 0
+        pop pop 0
     } {
-	div
+        div
     } ifelse
 } def
 
@@ -88,6 +88,7 @@
 
 boltdict begin
     /curvepath {
+        % change all lines into 4-point curves
         /addstraightcurve { /ny arg /nx arg
             oldx 2 mul 3 div nx 3 div add  oldy 2 mul 3 div ny 3 div add
             oldx 3 div nx 2 mul 3 div add  oldy 3 div ny 2 mul 3 div add
@@ -126,185 +127,133 @@ boltdict begin
         cvx exec
     } def
 
-    /pathtolineslengthp { /include_length arg
-	% analyze current path, creating pathpoints array
-	% turn all curves into lines
-	% pathpoints format: [x y lengthsofar /p] if include_length
+    /pathtopoints { /include_length arg
+        % analyze current path, creating pathpoints array
+        % pathpoints format: [x y lengthsofar ptype]
+        % drop last two fields if include_length is false
+        % ptype is /p for point or /c for control point
 
+        % count points in path & determine closedness
         /pathcount 0 def
-	/closed false def
-        gsave
-            { pop pop /pathcount pathcount 1 add def } % moveto
-            { pop pop /pathcount pathcount 1 add def } % lineto
-            { quit } % curveto
-            { /pathcount pathcount 1 add def /closed true def} % closepath
-	    pathforall
-        grestore
-        % pathcount is number of points in line
-        /pathpoints pathcount array def
-	/i 0 def
-	/x 0 def /y 0 def /linelen 0 def
-        /addpoint {
-            pathpoints i [x y
-                include_length {
-                    linelen /p
-                } if
-            ] put
-            /i i 1 add def
-        } def
-
-	/addline {
-	    i 0 eq {quit} if
-	    /ny exch def /nx exch def
-	    % segment length
-	    /seglen ny y sub dup mul nx x sub dup mul add sqrt def
-	    seglen currentlinewidth 10 div gt {
-		% linelen += length, update x and y
-		seglen linelen add /linelen exch def
-		/x nx def /y ny def
-                addpoint
-	    } {
-		/pathcount pathcount 1 sub def
-	    } ifelse
-	} def
-
-	% moveto
-	{
-	    /y exch def /x exch def
-	    i 0 ne {quit} if
-            addpoint
-	}
-	{ addline } % lineto
-	{ quit } % curve
-	{
-	    /ny pathpoints 0 get 1 get def
-	    /nx pathpoints 0 get 0 get def
-	    nx ny addline
-	} % close
-	pathforall
-    } def
-    /pathtolines {true pathtolineslengthp} def
-
-    % internal helper function for calligraphic, etc.
-    /pathtocurves {
-	% analyze current path, creating pathpoints array
-	% save all lines as 4-point curves
-	% pathpoints format: [x y lengthsofar ptype]
-	% ptype is /p for point or /c for control point
-
-	% count points in path & determine closedness
-
-	/pathcount 0 def
-	/closed false def
+        /closed false def
         gsave
             { 2 {pop} repeat /pathcount pathcount 1 add def } % moveto
             { 2 {pop} repeat /pathcount pathcount 1 add def } % lineto
             { 6 {pop} repeat /pathcount pathcount 3 add def } %curveto
             { /pathcount pathcount 1 add def /closed true def } % closepath
-	    pathforall
+            pathforall
         grestore
         % pathcount is number of points in line
 
-	% move path points into array
+        % move path points into array, tracking length and type
         /pathpoints pathcount array def
-	/i 0 def
-	/x 0 def /y 0 def /linelen 0 def
+        /i 0 def
+        /x 0 def /y 0 def /linelen 0 def
 
-	% define internal helper functions
-	/addcurve {
-	    % at this point, treat as 3 line segments
-	    % tag control points as "c" instead of "p"
-	    6 2 roll
-	    4 2 roll
-	    /types [/c /c /p] def
-	    /curvelen 0 def
-	    /curvepoints 3 array def
-	    /ci 0 def
-	    3 {
-		/ny exch def /nx exch def
-		% segment length
-		ny y sub dup mul nx x sub dup mul add sqrt
-		% linelen += length, update x and y
-		curvelen add /curvelen exch def
-		/x nx def /y ny def
-		/ptype types ci get def
-		curvepoints ci [x y linelen curvelen add ptype] put
-		/ci ci 1 add def
-	    } repeat
-	    curvelen currentlinewidth 10 div gt {
-		/linelen linelen curvelen add def
-		0 1 2 {
-		    /ci exch def
-		    pathpoints ci i add curvepoints ci get put
-		} for
-		/i i 3 add def
-	    } {
+        % define internal helper functions
+        /addpoint { /ptype arg
+            pathpoints i [x y
+                include_length {
+                    linelen ptype
+                } if
+            ] put
+            /i i 1 add def
+        } def
+        /addline {
+            i 0 eq {quit} if
+            /ny exch def /nx exch def
+            % segment length
+            /seglen ny y sub dup mul nx x sub dup mul add sqrt def
+            seglen currentlinewidth 10 div gt {
+                % linelen += length, update x and y
+                seglen linelen add /linelen exch def
+                /x nx def /y ny def
+                /p addpoint
+            } {
+                /pathcount pathcount 1 sub def
+            } ifelse
+        } def
+        /addcurve {
+            i 0 eq {quit} if
+            % for length, treat as 3 line segments
+            % tag control points as "c" instead of "p"
+            6 2 roll
+            4 2 roll
+            /types [/c /c /p] def
+            /ci 0 def
+            /curvelen 0 def
+            3 {
+                /ny exch def /nx exch def
+                % segment length
+                ny y sub dup mul nx x sub dup mul add sqrt
+                % linelen += length, update x and y
+                dup curvelen add /curvelen exch def
+                linelen add /linelen exch def
+                /x nx def /y ny def
+                /ptype types ci get def
+                ptype addpoint
+                /ci ci 1 add def
+            } repeat
+            curvelen currentlinewidth 10 div le {
                 % if curve is too small, drop it from path
-		/pathcount pathcount 3 sub def
-	    } ifelse
-	} def
+                /pathcount pathcount 3 sub def
+                /i i 3 sub def
+                /linelen linelen curvelen sub def
+            } if
+        } def
 
-	% args to pathforall
-	% moveto
-	{
-	    /y exch def /x exch def
-	    i 0 ne {quit} if
-	    pathpoints i [x y linelen /p] put
-	    /i i 1 add def
-	}
-	% lineto
-	{
-	    i 0 eq {quit} if
-	    addline
-	}
-	% curve
-	{
-	    i 0 eq {quit} if
-	    addcurve
-	}
-	% close
-	{
-	    i 0 eq {quit} if
-	    /closed true def
-	    /ny pathpoints 0 get 1 get def
-	    /nx pathpoints 0 get 0 get def
+        % args to pathforall
+        % moveto
+        {
+            /y exch def /x exch def
+            i 0 ne {quit} if
+            /p addpoint
+        }
+        { addline } % lineto
+        { addcurve } % curve
+        % close
+        {
+            i 0 eq {quit} if
+            /closed true def
+            /ny pathpoints 0 get 1 get def
+            /nx pathpoints 0 get 0 get def
             nx x eq ny y eq and not {
                 nx ny addline
             } {
-		/pathcount pathcount 1 sub def
+                /pathcount pathcount 1 sub def
             } ifelse
-	} pathforall
+        } pathforall
     } def
 
     /drawbevel {
-	/forward exch def
-	forward {
-	    /a1 direction def
-	    /a2 direction_2 def
-	} {
-	    /a1 direction_2 def
-	    /a2 direction def
-	} ifelse
-	currentlinejoin 1 eq {
-	    a1 a2 sub
-	    dup 0.1 le { 360 add } if
-	    dup 180 lt {
-		a2 add /a1 exch def
-		x y lineout a1 a2 arcn
-	    } {
-		pop
-		x a2 cos lineout mul add
-		y a2 sin lineout mul add
-		lineto
-	    } ifelse
-	} {
-	    x a2 cos lineout mul add
-	    y a2 sin lineout mul add
-	    lineto
-	} ifelse
+        /forward exch def
+        forward {
+            /a1 direction def
+            /a2 direction_2 def
+        } {
+            /a1 direction_2 def
+            /a2 direction def
+        } ifelse
+        currentlinejoin 1 eq {
+            a1 a2 sub
+            dup 0.1 le { 360 add } if
+            dup 180 lt {
+                a2 add /a1 exch def
+                x y lineout a1 a2 arcn
+            } {
+                pop
+                x a2 cos lineout mul add
+                y a2 sin lineout mul add
+                lineto
+            } ifelse
+        } {
+            x a2 cos lineout mul add
+            y a2 sin lineout mul add
+            lineto
+        } ifelse
     } def
 
-    % expects to be run after pathtolines or pathtocurves.
+    % expects to be run after pathtopoints.
     % expects radfunc to be defined.
     % add entries to pathpoints array.
     /pathparser {
@@ -474,9 +423,14 @@ end
 % call with function that determines "line radius" (1/2 thickness)
 /var_line [/radfunc] {
 
-    % analyze path as lines, put into pathpoints array
+    % drop tiny mistake segments
+    shavepath
+
+    % turn all curves into lines
     flattenpath
-    pathtolines
+
+    % analyze path, put into pathpoints array
+    true pathtopoints
 
     pathengine
 
@@ -485,11 +439,14 @@ end
 
 /calligraphic [/spline_offset] {
 
+    % drop tiny mistake segments
+    shavepath
+
     % turn all lines and closepaths to curves
     curvepath
 
     % analyze path, moving points into pathpoints array
-    pathtocurves
+    true pathtopoints
 
     % engine func to implement calligraphic style
     /radfunc {
@@ -540,9 +497,9 @@ end
 % call with 2 number arguments: subline width and control point thickness
 /callioutline {
     gsave
-	calligraphic
-	setlinewidth
-	stroke
+        calligraphic
+        setlinewidth
+        stroke
     grestore
     newpath
 } def
@@ -567,51 +524,51 @@ end
 /curr_path {
     false
     gsave
-	{2 {pop} repeat pop true}
-	{2 {pop} repeat pop true}
-	{6 {pop} repeat pop true}
-	{0 {pop} repeat pop true}
-	pathforall
+        {2 {pop} repeat pop true}
+        {2 {pop} repeat pop true}
+        {6 {pop} repeat pop true}
+        {0 {pop} repeat pop true}
+        pathforall
     grestore
 } def
 /arg { exch def } def
 /sparcdict 6 dict def
 /sparc {
     sparcdict begin
-	/a2 arg
-	/a1 arg
-	/r arg
-	/y arg
-	/x arg
-	x y translate
-	r dup scale
-	a1 rotate
-	1 0
-	curr_path {
-	    currentpoint pop 1 sub abs currentlinewidth 10 div lt
-	    currentpoint exch pop 0 sub abs currentlinewidth 10 div lt and
-	    {
-		pop pop
-	    } {
-		lineto
-	    } ifelse
-	} {
-	    moveto
-	} ifelse
-	/adiff a2 a1 sub dup 360 div cvi 360 mul sub def
-	adiff 0 lt {
-	    /adiff adiff 360 add def
-	} if
-	/theta adiff 2 div def
-	/offset 1 theta cos sub theta sin div 0.75 div def
-	1 offset
-	adiff cos adiff 90 sub cos offset mul add
-	adiff sin adiff 90 sub sin offset mul add
-	adiff cos adiff sin
-	curveto
-	a1 neg rotate
-	1 r div dup scale
-	x neg y neg translate
+        /a2 arg
+        /a1 arg
+        /r arg
+        /y arg
+        /x arg
+        x y translate
+        r dup scale
+        a1 rotate
+        1 0
+        curr_path {
+            currentpoint pop 1 sub abs currentlinewidth 10 div lt
+            currentpoint exch pop 0 sub abs currentlinewidth 10 div lt and
+            {
+                pop pop
+            } {
+                lineto
+            } ifelse
+        } {
+            moveto
+        } ifelse
+        /adiff a2 a1 sub dup 360 div cvi 360 mul sub def
+        adiff 0 lt {
+            /adiff adiff 360 add def
+        } if
+        /theta adiff 2 div def
+        /offset 1 theta cos sub theta sin div 0.75 div def
+        1 offset
+        adiff cos adiff 90 sub cos offset mul add
+        adiff sin adiff 90 sub sin offset mul add
+        adiff cos adiff sin
+        curveto
+        a1 neg rotate
+        1 r div dup scale
+        x neg y neg translate
     end
 } def
 /sparcn {
@@ -704,7 +661,7 @@ end
     boltdict begin
         gsave
             flattenpath
-            false pathtolineslengthp
+            false pathtopoints
             pathpoints 0 pathcount getinterval
         grestore
     end
