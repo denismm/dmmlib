@@ -253,6 +253,39 @@ boltdict begin
         } ifelse
     } def
 
+    % specifically for use in radfunc functions
+    % provides the length of the current curve for control points.
+    /curve_distance {
+        ptype /p eq {
+            0
+        } {
+            % i is current position on pathcount
+            % find dist for previous p
+            /lp i 1 sub def
+            {
+                pathpoints lp get /last_p arg
+                last_p 3 get /p eq {
+                    /last_dist last_p 2 get def
+                    exit
+                } if
+                /lp lp 1 sub def
+            } loop
+            % find dist for next p
+            /np i 1 add def
+            {
+                pathpoints np get /next_p arg
+                next_p 3 get /p eq {
+                    /next_dist next_p 2 get def
+                    exit
+                } if
+                /np np 1 add def
+            } loop
+            % return difference
+            next_dist last_dist sub
+        } ifelse
+    } def
+
+
     % expects to be run after pathtopoints.
     % expects radfunc to be defined.
     % add entries to pathpoints array.
@@ -334,9 +367,9 @@ boltdict begin
                 } if
             } ifelse
             pathpoints i bevel {
-                [x y dist ptype direction lineout bevel direction_2]
+                [x y dist ptype direction lineout true direction_2]
             } {
-                [x y dist ptype direction lineout bevel direction]
+                [x y dist ptype direction lineout false direction]
             } ifelse put
         } for
     } def

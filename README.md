@@ -251,6 +251,7 @@ A library for drawing lines differently.  More information can be found at
 *   linelen: length of the entire path
 *   x, y: position of the point in the current reference frame
 *   ptype: /p for most points, /c for control points of a curveto
+*   curve_distance: the full length of the current curveto, for /c points.  0 for /p points.
 
 *proc* **var_line** *-*
 
