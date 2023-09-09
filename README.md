@@ -93,12 +93,12 @@ These are math functions that I use often enough to not want to constantly rewri
 ### Control Operators
 *int proc* **circrepeat** *-*
 
-> Run the proc *int* times, rotating 360/*int* after each one.  
+> Run the proc *int* times, rotating 360/*int* after each one.
 > Will rotate clockwise if *int* is negative.
 
 *int int proc* **schlafrepeat** *-*
 
-> Like **circrepeat**, but the second int multiplies each rotate.  
+> Like **circrepeat**, but the second int multiplies each rotate.
 > Search for "Schl&auml;fli Symbol" for more details.
 
 > `/star {5 2 {0 2 goto} schlafrepeat closepath stroke } def`
@@ -179,7 +179,7 @@ These are math functions that I use often enough to not want to constantly rewri
 
 **shavepath**
 
-> Replaces the current path with a new one that contains no small lines 
+> Replaces the current path with a new one that contains no small lines
 > (where "small" means "less than 0.1 times the currentlinewidth").
 
 ### Painting Operators
@@ -242,7 +242,7 @@ A library for drawing lines differently.  More information can be found at
 > Replaces the current path, which can't contain internal **moveto** operators,
 > with an outline of a variable-width stroke of that path.
 > Respects linecap, linejoin, and miterlimit settings.
-> The proc must return half of the desired line thickness at every point 
+> The proc must return half of the desired line thickness at every point
 > based on internal variables in **var_path**.  Possibly useful variables:
 
 *   i: position along the array of points
@@ -299,7 +299,7 @@ A library for drawing lines differently.  More information can be found at
 
 > Replaces the current path, which can't contain internal **moveto** operators,
 > with an outline of a "calligraphic" stroke of that path.  This path
-> goes to full width at the endpoints of a **moveto**, **lineto**, or 
+> goes to full width at the endpoints of a **moveto**, **lineto**, or
 > **curveto** operator, but gets thinner in between those points (including
 > along the path of a curve).  The argument determines how thick the
 > thin segments are, in a not easily describable way - 0 will make a straight
@@ -307,7 +307,7 @@ A library for drawing lines differently.  More information can be found at
 > for straight lines.  See the lines.html web page for more details.
 
 > This also uses var_path under the covers, after calling **curvepath** - the
-> function it supplies is 
+> function it supplies is
 > `currentlinewidth 2 div ptype /c eq { spline_offset mul } if`.
 
 *spline_offset* **callistroke** *-*
@@ -377,7 +377,7 @@ Text manipulation and display functions.
 
 **X_center, x_center, Xj_center**
 
-> **Translate** so as to put y=0 in the vertical center of future text 
+> **Translate** so as to put y=0 in the vertical center of future text
 > in the current font.  The center is defined as the middle of X, x, or Xj
 > appropriately (capital, minuscule, capital plus descender).
 
@@ -405,7 +405,7 @@ Text manipulation and display functions.
 
 *string num proc* **width_height_line_show** *-*
 
-> As **width_line_show** but scale the text in both dimensions 
+> As **width_line_show** but scale the text in both dimensions
 > rather than compressing.
 
 *string linewidth lineheight proc* **paragraph_show** *lines*
@@ -418,7 +418,7 @@ Text manipulation and display functions.
 
 *string radius* **circle_center_show** *-*
 
-> **Show** the string along a circular path, centered on 
+> **Show** the string along a circular path, centered on
 > the origin, with the X center at the specified radius.
 > The string will be centered around the 90-degree axis.  If a
 > negative radius is provided the text will curve inward and be centered
@@ -435,7 +435,7 @@ Replacements for fill.  This file runs base.ps and textbase.ps.
 
 *xseparation yseparation proc* **ObjectFill** *-*
 
-> Fill the current path with copies of the object rendered by *proc*.  
+> Fill the current path with copies of the object rendered by *proc*.
 > Objects will be arranged in a grid with a point at 0,0.  If a point
 > in the grid is inside the path, it will be drawn - there is no clipping,
 > so if an object is near the edge it will extend outside the original path.
@@ -450,7 +450,7 @@ Replacements for fill.  This file runs base.ps and textbase.ps.
 
 *red green blue steps* **gradientfill** *-*
 
-> Fill the current path with a gradient starting at red green blue at the 
+> Fill the current path with a gradient starting at red green blue at the
 > edge and becoming white in the center.
 
 ## readpnm.ps
@@ -459,7 +459,7 @@ Load a PPM or PGM format image onto the page.  For more details, see
 
 *filename* **drawpnm_width** *-* (**drawpnm_height, drawpnm_square, drawpnm_height**)
 
-> Draw the ppm or pgm in filename onto the page.  The image will have its 
+> Draw the ppm or pgm in filename onto the page.  The image will have its
 > lower corner at 0,0.  The end of the operator indicates how to handle the
 > size of the image.
 
@@ -496,4 +496,95 @@ Code to find the intersection between two paths.  Currently uses an n-squared al
 > [x y] arrays.  There may be any number of these, including 0.
 
 ## polar.ps
+
+A library for drawing in polar / spherical coordinates.
+
+### general notes
+
+* p prefix = polar coords and polar lines: r theta pmoveto
+* s prefix = spherical coords and great-circle paths : lat long slineto
+* both of above rendered in polar
+* m prefix = as s but rendered in plate carree projection (for texturemaps).
+* Location of 180-crossing lines is unpredictable.
+* c prefix = cartesian coords on the unit sphere [x y z]
+
+*radius theta* **polar** *x y*
+
+*x y* **ralop** *radius theta*
+
+> Convert between cartesian and polar coordinates.
+
+*radius theta* **pmoveto** *-*
+
+*radius theta* **plineto** *-*
+
+*radius theta* **pgoto** *-*
+
+*radius theta* **ptranslate** *-*
+
+> moveto, lineto, goto, and translate in polar coordinates.  Note that after
+> ptranslate,
+> more polar commands will have that new origin as the origin.
+> plineto draws a line that varies r and theta at a constant rate with each
+> other, effectively a straight line in polar space.  It defaults to doing
+> this with a spline that approximates the correct line.  If polar_spline_mode
+> is false, it will instead draw 100 small segments to more carefully match
+> the correct line.
+
+*bool* **set_polar_spline_mode** *-*
+> Sets the aforementioned polar_spline_mode.
+
+*r theta* **p2s** *lat long*
+
+*lat long* **s2p** *r theta*
+
+> Convert between polar coords and a spherical projection, where
+> -90 latitude is at the
+> origin.
+
+*long lat* **smoveto** *-*
+
+*long lat* **slineto** *-*
+
+*long lat* **sgoto** *-*
+
+*long lat* **stranslate** *-*
+
+> moveto, lineto, goto, and translate in spherical coordinates, with the same
+> caveats as above.  slineto draws a great-circle route to the next point,
+> using 100 small segments.
+
+*long lat* **s2c** *[x y z]*
+
+*[x y z]* **c2s** *long lat*
+
+> Convert between spherical coordinates and cartesian coordinates,
+> expressed as a list of three numbers.
+
+*[x y z]* **vlength** *len*
+
+*[Ax Ay Az] s* **vsmul** *[Bx By Bz]*
+
+*[Ax Ay Az] s* **vsdiv** *[Bx By Bz]*
+
+*[Ax Ay Az]* **vnorm** *[Ix Iy Iz]*
+
+*[Ax Ay Az] [Bx By Bz]* **vcross** *[Cx Cy Cz]*
+
+> vector length, vector-scalar multiplication and division, vector normalization, and cross product.
+
+*[Ax Ay Az] matrix33* **vmtransform** *[Bx By Bz]*
+
+*matrix33* **minvert** *matrix33*
+
+*matrix33 matrix33* **mmconcat** *matrix33*
+
+> Transform vector A by a 3x3 matrix.
+> Invert a 3x3 matrix.
+> Concatenate two 3x3 matrices.
+
+**m2s, s2m, mmoveto, mlineto, mgoto, mtranslate**
+
+> These draw spherical coordinates on a equirectangular projection (plane chart).
+
 ## engine.ps
