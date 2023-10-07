@@ -50,10 +50,19 @@
 
 /pnode { gsave pmoveto node grestore } def
 
+% number of segments to use when drawing curved line
 /segments 100 def
+
+% if true, approximate great circle with spline
+% if false, make segments along calculated path
 /polar_spline_mode false def
-/firstr_mode false def
+
+% if false, do great circle lines
+% if (L), draw inner curve and straight line along radius
+% if (7), draw outer curve and straight line along radius
+/polar_corner_mode false def
 /set_polar_spline_mode { /polar_spline_mode arg } def
+/set_polar_corner_mode { /polar_corner_mode arg } def
 /plineto {
     polar_dict begin
         /newt arg
@@ -68,54 +77,73 @@
 	    newr newt polar lineto
 	} {
 	    % if not straight line
-	    polar_spline_mode {
-		% if spline mode
-		/angle_span  newt oldt sub def
-		/height_span newr oldr sub def
-		/theta angle_span 2 div def
-		/arc_offset 1 theta cos sub theta sin div 0.75 div def
-		% arc_offset is positive if newt > oldt
-		/line_offset height_span 3 div def
-		% line_offset is positive if newr > oldr
-		/firstr oldr def /secondr newr def
-		
-		%current point is oldt, oldr
-		%first control point
-		currentpoint exch % y0 x0
-		oldt sin arc_offset mul firstr mul sub
-		oldt cos line_offset firstr oldr div mul mul add
-		exch % x1 y0
-		oldt cos arc_offset mul firstr mul add
-		oldt sin line_offset firstr oldr div mul mul add % x1 y1
+            polar_corner_mode false eq {
+                polar_spline_mode {
+                    % if spline mode
+                    /angle_span  newt oldt sub def
+                    /height_span newr oldr sub def
+                    /theta angle_span 2 div def
+                    /arc_offset 1 theta cos sub theta sin div 0.75 div def
+                    % arc_offset is positive if newt > oldt
+                    /line_offset height_span 3 div def
+                    % line_offset is positive if newr > oldr
+                    /firstr oldr def /secondr newr def
+                    
+                    %current point is oldt, oldr
+                    %first control point
+                    currentpoint exch % y0 x0
+                    oldt sin arc_offset mul firstr mul sub
+                    oldt cos line_offset firstr oldr div mul mul add
+                    exch % x1 y0
+                    oldt cos arc_offset mul firstr mul add
+                    oldt sin line_offset firstr oldr div mul mul add % x1 y1
 
-		%second control point
-		newr newt polar exch % y3 x3
-		newt sin arc_offset mul secondr mul add
-		newt cos line_offset secondr newr div mul mul sub
-		exch % x2 y3
-		newt cos arc_offset mul secondr mul sub
-		newt sin line_offset secondr newr div mul mul sub % x2 y2
+                    %second control point
+                    newr newt polar exch % y3 x3
+                    newt sin arc_offset mul secondr mul add
+                    newt cos line_offset secondr newr div mul mul sub
+                    exch % x2 y3
+                    newt cos arc_offset mul secondr mul sub
+                    newt sin line_offset secondr newr div mul mul sub % x2 y2
 
-		% third control point
-		newr newt polar
+                    % third control point
+                    newr newt polar
 
-		curveto
-	    } {
-		% if not spline mode
-		oldr newr eq {
-		   0 0 oldr oldt newt
-		   newt oldt gt { arc } { arcn } ifelse
-		} {
-		    % if not simple arc
-		    1 segments div dup 1 {
-			/fraction exch def
-			oldr newr oldr sub fraction mul add
-			oldt newt oldt sub fraction mul add
-			polar lineto
-		    } for
-		} ifelse % simple arc?
-	    } ifelse % straight line?
-	} ifelse % spline mode?
+                    curveto
+                } {
+                    % if not spline mode
+                    oldr newr eq {
+                       0 0 oldr oldt newt
+                       newt oldt gt { arc } { arcn } ifelse
+                    } {
+                        % if not simple arc
+                        1 segments div dup 1 {
+                            /fraction exch def
+                            oldr newr oldr sub fraction mul add
+                            oldt newt oldt sub fraction mul add
+                            polar lineto
+                        } for
+                    } ifelse % simple arc?
+                } ifelse % spline mode?
+            } {
+                % corner mode not false
+                /r_distance newr oldr sub def
+                /arc_func { newt oldt gt { arc } { arcn } ifelse } def
+                r_distance 0 eq {
+                   0 0 oldr oldt newt arc_func
+                } {
+                    polar_corner_mode (L) eq r_distance 0 lt xor
+                    /arcfirst arg
+                    arcfirst {
+                        0 0 oldr oldt newt arc_func
+                        newr newt polar lineto
+                    } {
+                        newr oldt polar lineto
+                        0 0 newr oldt newt arc_func
+                    } ifelse
+                } ifelse
+            } ifelse % not corner mode?
+	} ifelse % straight line
     end
 } def
 

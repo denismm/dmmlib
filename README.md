@@ -529,10 +529,15 @@ A library for drawing in polar / spherical coordinates.
 > other, effectively a straight line in polar space.  It defaults to doing
 > this with a spline that approximates the correct line.  If polar_spline_mode
 > is false, it will instead draw 100 small segments to more carefully match
-> the correct line.
+> the correct line.  If polar_corner_mode is (7) or (L), it will instead
+> draw a straight line and an arc - L means draw the inner arc, 7 means draw
+> the outer arc.
 
 *bool* **set_polar_spline_mode** *-*
 > Sets the aforementioned polar_spline_mode.
+
+*bool* **set_polar_corner_mode** *-*
+> Sets the aforementioned polar_corner_mode.
 
 *r theta* **p2s** *lat long*
 
