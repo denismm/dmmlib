@@ -4,7 +4,7 @@
 % s prefix = spherical coords and great-circle paths : lat long slineto
 % both of above rendered in polar
 
-% g prefix = polar coords projected onto concentric polygons
+% pp prefix = polar coords projected onto concentric polygons
 
 % m prefix = as s but rendered in plate carree projection (for texturemaps).  
 % Location of 180-crossing lines is unpredictable.
@@ -178,9 +178,9 @@
     sub_angle x_points interpolate
     sub_angle y_points interpolate
 } def
-/gmoveto { polypolar moveto } def
-/glineto { polypolar lineto } def
-/ggoto { curr_path {glineto} {gmoveto} ifelse } def
+/ppmoveto { polypolar moveto } def
+/pplineto { polypolar lineto } def
+/ppgoto { curr_path {pplineto} {ppmoveto} ifelse } def
 
 /vector_dict 20 dict def
 /s2c {  % spherical to cartesian
