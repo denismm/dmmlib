@@ -6,7 +6,7 @@
 
 % pp prefix = polar coords projected onto concentric polygons
 
-% m prefix = as s but rendered in plate carree projection (for texturemaps).  
+% m prefix = as s but rendered in plate carree projection (for texturemaps).
 % Location of 180-crossing lines is unpredictable.
 
 % c prefix = cartesian coords on the unit sphere [x y z]
@@ -90,7 +90,7 @@
                     /line_offset height_span 3 div def
                     % line_offset is positive if newr > oldr
                     /firstr oldr def /secondr newr def
-                    
+
                     %current point is oldt, oldr
                     %first control point
                     currentpoint exch % y0 x0
@@ -170,7 +170,7 @@
 /polypolar {
     /theta arg
     /r arg
-    /pre theta polypolar_big_angle div cvi polypolar_big_angle mul def
+    /pre theta polypolar_big_angle div floor polypolar_big_angle mul def
     /post pre polypolar_big_angle add def
     /sub_angle theta polypolar_big_angle mymod polypolar_big_angle div def
     /x_points [pre cos r mul post cos r mul] def
@@ -178,8 +178,67 @@
     sub_angle x_points interpolate
     sub_angle y_points interpolate
 } def
+
+/polyralop { /y arg /x arg
+    % reverse polypolar mapping
+    y 0 eq x 0 eq {
+        0 0
+    } {
+        /true_angle y x atan def
+        /true_distance x dup mul y dup mul add sqrt def
+        /face_number true_angle polypolar_big_angle div floor def
+        /normal_for_face
+            face_number 0.5 add
+            polypolar_big_angle mul def
+        /angle_diff true_angle normal_for_face sub def
+        /projection_r angle_diff cos true_distance mul def
+        /result_r projection_r polypolar_big_angle half cos div def
+        /sector_half_circ result_r polypolar_big_angle half sin mul def
+        /circ_distance angle_diff sin true_distance mul sector_half_circ add def
+        /result_theta
+            circ_distance sector_half_circ 2 mul div % proportion of circ
+            [face_number polypolar_big_angle mul dup polypolar_big_angle add]
+            interpolate def
+        result_r result_theta
+    } ifelse
+} def
 /ppmoveto { polypolar moveto } def
-/pplineto { polypolar lineto } def
+/pplineto {
+    polar_dict begin
+        /newt arg
+        /newr arg
+
+
+	currentpoint polyralop
+	/oldt arg
+	/oldr arg
+
+        newr 0 eq { /newt oldt def } if
+        oldr 0 eq { /oldt newt def } if
+
+        newt oldt sub 360 div 0.5 add floor -360 mul newt add /newt exch def
+        /oldface oldt polypolar_big_angle div floor def
+        /newface newt polypolar_big_angle div floor def
+        oldface newface ne {
+            % only if we're crossing faces
+            % loop depends on direction
+            /anglespan newt oldt sub def
+            oldface newface lt {
+                oldface 1 add 1 newface
+            } {
+                oldface -1 newface 1 add
+            } ifelse
+            % iterate through boundaries
+            {
+                /corner_t exch polypolar_big_angle mul def
+                /corner_proportion corner_t oldt sub anglespan div def
+                /corner_r corner_proportion [oldr newr] interpolate def
+                corner_r corner_t polypolar lineto
+            } for
+        } if
+        newr newt polypolar lineto
+    end
+} def
 /ppgoto { curr_path {pplineto} {ppmoveto} ifelse } def
 
 /vector_dict 20 dict def
@@ -295,9 +354,9 @@
 		/cell 0 def
 		0 1 2 {
 		    /k arg
-		    cell 
-			M1 i get k get 
-			M2 k get j get mul 
+		    cell
+			M1 i get k get
+			M2 k get j get mul
 			add /cell arg
 		} for
 		row j cell put
@@ -326,7 +385,7 @@
 	/oldc oldlat oldlong s2c def
 
 	% get shorter distance around
-	newlong oldlong sub 360 div 0.5 add floor -360 mul newlong add 
+	newlong oldlong sub 360 div 0.5 add floor -360 mul newlong add
 	/newlong exch def
 
 	% check for zero
@@ -363,13 +422,13 @@ polar_dict /mside_thresh 50 put
 
 	% set mside here - it is reset by mmoveto
 	mside 0 eq {
-	    long mside_thresh     gt { 
-		/mside  1 def 
+	    long mside_thresh     gt {
+		/mside  1 def
 		/pos_thresh 360 mside_thresh sub def
 		/neg_thresh 0 mside_thresh sub def
 	    } if
-	    long mside_thresh neg lt { 
-		/mside -1 def 
+	    long mside_thresh neg lt {
+		/mside -1 def
 		/pos_thresh 0 mside_thresh add def
 		/neg_thresh -360 mside_thresh add def
 	    } if
@@ -377,7 +436,7 @@ polar_dict /mside_thresh 50 put
 	lat long
     end
 } def
-/s2m { 
+/s2m {
     polar_dict begin
 	/long arg
 	/lat arg
@@ -386,11 +445,11 @@ polar_dict /mside_thresh 50 put
 	    /long long 360 sub def
 	} if
 	% handle mside
-	mside  1 eq long mside_thresh neg lt and { 
-	    /long long 360 add def 
+	mside  1 eq long mside_thresh neg lt and {
+	    /long long 360 add def
 	} if
-	mside -1 eq long mside_thresh     gt and { 
-	    /long long 360 sub def 
+	mside -1 eq long mside_thresh     gt and {
+	    /long long 360 sub def
 	} if
 	long lat
     end
@@ -398,7 +457,7 @@ polar_dict /mside_thresh 50 put
 
 
 /mnode { node } def
-/mmoveto { 
+/mmoveto {
     % reset set mside and then set if appropriate
     polar_dict begin
 	/mside 0 def
@@ -431,7 +490,7 @@ polar_dict /mside_thresh 50 put
 	/close_thresh polar_dict /mside_thresh get 2 div def
 
 	% get shorter distance around
-	newlong oldlong sub 360 div 0.5 add floor -360 mul newlong add 
+	newlong oldlong sub 360 div 0.5 add floor -360 mul newlong add
 	/newlong exch def
 
 	% check for zero
@@ -451,12 +510,12 @@ polar_dict /mside_thresh 50 put
 		% convert to cartesian, then cross with norm and cross back
 		s2c normc vcross vnorm normc exch vcross vnorm
 
-		% convert to map coords 
+		% convert to map coords
 		c2s s2m /newy arg /newx arg
 
 		% check for thresh-crossing
 		% newx neg_thresh sub close_thresh 2 div lt
-		% pos_thresh oldx sub close_thresh 2 div lt and 
+		% pos_thresh oldx sub close_thresh 2 div lt and
 		oldx newx sub abs 270 gt
 		{
 		    /poley oldy oldy abs div 90 mul def
