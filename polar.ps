@@ -181,7 +181,7 @@
 
 /polyralop { /y arg /x arg
     % reverse polypolar mapping
-    y 0 eq x 0 eq {
+    y 0 eq x 0 eq and {
         0 0
     } {
         /true_angle y x atan def
@@ -205,9 +205,36 @@
 /ppmoveto { polypolar moveto } def
 /pplineto {
     polar_dict begin
+        /outer_newt arg
+        /outer_newr arg
+
+	currentpoint polyralop
+	/outer_oldt arg
+	/outer_oldr arg
+
+        outer_newr 0 eq { /outer_newt outer_oldt def } if
+        outer_oldr 0 eq { /outer_oldt outer_newt def } if
+
+        outer_newt outer_oldt sub 360 div 0.5 add floor -360 mul outer_newt add /outer_newt exch def
+        polar_corner_mode false eq {
+            outer_newr outer_newt basepplineto
+        } {
+            polar_corner_mode (L) eq outer_newr outer_oldr sub 0 lt xor
+            /arcfirst arg
+            arcfirst {
+                outer_oldr outer_newt basepplineto
+                outer_newr outer_newt basepplineto
+            } {
+                outer_newr outer_oldt basepplineto
+                outer_newr outer_newt basepplineto
+            } ifelse
+        } ifelse
+    end
+} def
+/basepplineto {
+    polar_dict begin
         /newt arg
         /newr arg
-
 
 	currentpoint polyralop
 	/oldt arg
@@ -217,6 +244,7 @@
         oldr 0 eq { /oldt newt def } if
 
         newt oldt sub 360 div 0.5 add floor -360 mul newt add /newt exch def
+
         /oldface oldt polypolar_big_angle div floor def
         /newface newt polypolar_big_angle div floor def
         oldface newface ne {
