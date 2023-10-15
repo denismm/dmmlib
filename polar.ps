@@ -4,6 +4,8 @@
 % s prefix = spherical coords and great-circle paths : lat long slineto
 % both of above rendered in polar
 
+% g prefix = polar coords projected onto concentric polygons
+
 % m prefix = as s but rendered in plate carree projection (for texturemaps).  
 % Location of 180-crossing lines is unpredictable.
 
@@ -156,6 +158,29 @@
 /p2s {  % polar to spherical
     exch 90 sub exch
 } def
+
+% polygon section
+% TODO: these should all use a local dict
+/polygon_sides 0 def    % don't even try it
+/set_polypolar_sides {
+    /polypolar_sides arg
+    /polypolar_big_angle 360 polypolar_sides div def
+} def
+
+/polypolar {
+    /theta arg
+    /r arg
+    /pre theta polypolar_big_angle div cvi polypolar_big_angle mul def
+    /post pre polypolar_big_angle add def
+    /sub_angle theta polypolar_big_angle mymod polypolar_big_angle div def
+    /x_points [pre cos r mul post cos r mul] def
+    /y_points [pre sin r mul post sin r mul] def
+    sub_angle x_points interpolate
+    sub_angle y_points interpolate
+} def
+/gmoveto { polypolar moveto } def
+/glineto { polypolar lineto } def
+/ggoto { curr_path {glineto} {gmoveto} ifelse } def
 
 /vector_dict 20 dict def
 /s2c {  % spherical to cartesian
