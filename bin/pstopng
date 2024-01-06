@@ -1,0 +1,138 @@
+#!/usr/bin/perl
+# read .ps and draw bitmaps
+
+
+# read until end of prolog
+# for each argument: print prolog and arg into png
+
+use strict;
+
+# get arguments
+# my %arg = map {$_ => 1} @ARGV;
+my ($left, $bottom, $right, $top, $size, $file) = splice (@ARGV, 0, 6);
+my @object = @ARGV;
+
+if (! @object) {
+    print STDERR "Usage: $0 left bottom right top scale filename object+\n";
+    print STDERR "bottom, right, or top can be 'd' for default.\n";
+    print STDERR "objects can also be commands:\n";
+    print STDERR "  -Wn = set default linewidth to n pixels (defaults to 1)\n";
+    print STDERR "  -An = set antialias multiplier to n (defaults to 4)\n";
+    print STDERR "  -Pfoo = set prefix to foo (defaults to none)\n";
+    print STDERR "  -Sfoo = set suffix to foo (defaults to none)\n";
+    print STDERR "  -Cfoo = add foo to end of PS Prolog code\n";
+    print STDERR "  -Lfoo = add foo just before object in PS code\n";
+    exit 1;
+}
+
+die "can't default left extent" if $left eq 'd';
+# top has complicated default rules
+if ($top eq 'd') { 
+    if ($bottom eq 'd') {
+	if ($right eq 'd') {
+	    $top = -1 * $left;
+	} else {
+	    $top = $right;
+	}
+    } else {
+	if ($right eq 'd') {
+	    $top = -1 * $bottom;
+	} else {
+	    if ($right == -1 * $bottom) {
+		$top = $right;
+	    } else {
+		die "no clear default for top extent";
+	    }
+	}
+    }
+}
+if ($bottom eq 'd') { $bottom = $left; }
+if ($right eq 'd') { $right = -1 * $left; }
+
+my $basewidth = $right - $left;
+my $baseheight = $top - $bottom;
+
+# anti-aliasing scale
+my $aasize = 4;
+
+# line width
+my $linewidth = 1;
+
+# prefix and suffix
+my $prefix = '';
+my $suffix = '';
+my $late = '';
+
+# command to draw a single bitmap
+my $command = "gs -sOutputFile=- -sDEVICE=ppmraw -gWIDTHxHEIGHT -q -dNOPAUSE -dBATCH -dNOSAFER .pstopng_temp.ps | pnmscale AASCALE | pnmtopng > 'OUTPUT.png'\n";
+
+open (IN, $file) || die "can't open $file: $!";
+my $header;
+my $header_ended;
+READ_HEADER: while (<IN>) {
+    $header .= $_;
+    if (/^%%EndProlog/) {
+	$header_ended = 1;
+	last READ_HEADER;
+    }
+}
+
+die "%%EndProlog missing in $file" unless $header_ended;
+
+OBJECT: foreach my $object (@object) {
+    if ($object =~ /^\-([APSWCL])(.*)$/i) {
+	my ($command, $argument) = ($1, $2);
+	if (uc $command eq 'W') {
+	    $linewidth = $argument + 0;
+	    print STDERR "Linewidth: $linewidth\n";
+	} elsif (uc $command eq 'P') {
+	    $prefix = $argument;
+	    print STDERR "output file prefix: $prefix\n";
+	} elsif (uc $command eq 'S') {
+	    $suffix = $argument;
+	    print STDERR "output file suffix: $suffix\n";
+	} elsif (uc $command eq 'A') {
+	    $aasize = $argument + 0;
+	    print STDERR "AA multiplier: $aasize\n";
+	} elsif (uc $command eq 'C') {
+	    $header .= "$argument\n";
+	    print STDERR "Added code $argument\n";
+	} elsif (uc $command eq 'L') {
+	    $late .= "$argument\n";
+	    print STDERR "Added late code $argument\n";
+	} else {
+	    die "Unrecognized command $object";
+	}
+	next OBJECT;
+    }
+    $object =~ s/\.png$//;
+    my $aascale = 1 / $aasize;
+    print STDERR "$object: ";
+    open OUT, ">.pstopng_temp.ps" || die "Can't open .pstopng_temp.ps: $!";
+    my $height = int($baseheight * $size * $aasize + 1);
+    my $width = int($basewidth * $size * $aasize + 1);
+    print OUT $header;
+    print OUT "$linewidth $size div setlinewidth\n";
+    print OUT "$aasize dup scale\n";
+    # print OUT "0.5 dup translate\n";
+    print OUT "$size dup scale\n";
+    print OUT "$late\n";
+    print OUT "$left neg $bottom neg translate\n";
+    print OUT "$object\nshowpage\n";
+    close OUT || die "Can't close .pstopng_temp.ps: $!";
+    my $gscommand = $command;
+    $gscommand =~ s/HEIGHT/$height/g;
+    $gscommand =~ s/WIDTH/$width/g;
+    $gscommand =~ s/AASCALE/$aascale/g;
+    $gscommand =~ s/OUTPUT/$prefix$object$suffix/g;
+    # print STDERR $gscommand;
+    my $return = system $gscommand;
+    if ($return != 0) {
+	print STDERR "problem: $!";
+	die;
+    } else {
+	print STDERR "OK\n";
+    }
+    unlink ".pstopng_temp.ps" || die "Can't delete .pstopng_temp.ps: $!";
+}
+print STDERR "Drawing Completed.\n";

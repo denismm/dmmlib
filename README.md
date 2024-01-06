@@ -21,7 +21,7 @@ Usage: add a soft link to dmmlib from your work directory.
 2 thicken
 0 0 1.25 0 180 sparcn brushystroke
 2.5 3 goto
-1 0 4 0 2.5 -3 curveto boltstroke
+1 0 4 0 2.5 -3 curveto taperstroke
 showpage
 ```
 
