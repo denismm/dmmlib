@@ -467,6 +467,30 @@ end
 /setkatebowcolor { katebow setrgbcolor } def
 /katebowfill { katebow rgbfill } def
 
+% take (#db0072) or (db0072), put r g b on the stack
+% so you can say `(#db0072) hextorgb setrgbcolor` or similar
+/hextorgb { /hexcolor arg
+    hexcolor 0 get (#) 0 get eq {
+        /hexcolor hexcolor 1 hexcolor length 1 sub getinterval def
+    } if
+    /colorlen hexcolor length 3 idiv def
+    /result [0 0 0] def
+    /buffer colorlen 3 add string def
+    buffer 0 (16#) putinterval
+    0 1 2 { /i arg
+        hexcolor i colorlen mul colorlen getinterval
+        buffer exch 3 exch putinterval
+        result i buffer cvi put
+    } for
+    /divisor 16 colorlen exp 1 sub def
+    0 1 2 { /i arg
+        result i get divisor div
+    } for
+} def
+
+/sethexcolor { hextorgb setrgbcolor } def
+/hexfill { hextorgb rgbfill } def
+
 % render an eps file, given filename and bounding box, 
 % with ll at 0,0 and height of 1
 /epsdict 10 dict def

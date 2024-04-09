@@ -207,6 +207,14 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > Set the current color to the given angle around the sinebow circle.
 
+*hexstring* **hextorgb** *r g b*
+
+> Convert a hex string such as (#db0072) to r g b values.
+
+*hexstring* **sethexcolor** *-*
+
+> Set the current color to a value defined by a hex string.
+
 *-* **whitefill** *-*
 
 *num* **grayfill** *-*
@@ -218,6 +226,8 @@ These are math functions that I use often enough to not want to constantly rewri
 *angle* **katebowfill** *-*
 
 *angle* **sinebowfill** *-*
+
+*angle* **hexfill** *-*
 
 > Fill the current path with the given color, leaving the path unaffected.
 
@@ -591,5 +601,20 @@ A library for drawing in polar / spherical coordinates.
 **m2s, s2m, mmoveto, mlineto, mgoto, mtranslate**
 
 > These draw spherical coordinates on a equirectangular projection (plane chart).
+
+## reasonablecolors.ps
+A port of the reasonable colors code from https://reasonable.work/colors/ or https://github.com/matthewhowell/reasonable-colors .
+
+*colorname shade* **reasonable** *r g b*
+
+> Convert a color-name as a name value such as /rose and a shade such as 3 to rgb values. Note that unlike the css variables, shade goes from 0 to 5.
+
+*colorname shade* **setreasonablecolor** *-*
+
+*colorname shade* **reasonablefill** *-*
+
+> Set the current color or fill the current path with a reasonable color.
+
+TODO: make it easier to use the reasonable_wheel internal list to get complementary colors, etc.
 
 ## engine.ps
