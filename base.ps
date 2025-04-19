@@ -16,6 +16,16 @@
     } ifelse
 } def
 
+% += for postscript, two ways
+
+% add to a variable
+% v i -> v i v -> v i x -> v i+x -> -
+/adddef { 1 index cvx exec add def } def
+
+% add to a key in a dict or a position in an array
+% c k i -> c k i c -> c k i c k -> c k i x -> c k i+x -> -
+/addput { 2 index 2 index get add put } def
+
 /safe_func_dict_dict 20 dict defaultdef
 
 % /foo [/x /y /z] { x dup mul y dup mul z dup mul add add } 1 /new dict_safe_func

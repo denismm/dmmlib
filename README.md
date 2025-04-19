@@ -90,6 +90,14 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > **def** unless the key is already defined.
 
+*name increment* **adddef** *-*
+
+> Add *increment* to the variable named *name*.  += for variables.
+
+*container key increment* **addput** *-*
+
+> Add *increment* to the *container* member under *key*. Container can be dict or array.  += for containers.
+
 ### Control Operators
 *int proc* **circrepeat** *-*
 
