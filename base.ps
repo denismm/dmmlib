@@ -2,6 +2,8 @@
 
 /arg { exch def } def
 
+/debug {pop} def
+% /debug {==} def
 % define if not known
 /defaultdef {
     % name definition
@@ -29,6 +31,15 @@
 /safe_func_dict_dict 20 dict defaultdef
 
 % /foo [/x /y /z] { x dup mul y dup mul z dup mul add add } 1 /new dict_safe_func
+% DSFs dictionary situation:
+%     Each function (by name) has its own func_local_dict
+%         (stored in /safe_func_dict_dict)
+%     The "function_dictionary" arg can be:
+%         a dictionary to use 
+%         /new to use a new dictionary for a new dictionary for each invocation
+%         false to not wrap the function in a dictionary at all
+%     This function_dictionary runs _inside_ of the func_local_dict.
+
 /dict_safe_func {
     /function_dictionary arg
     /returns arg
@@ -48,13 +59,26 @@
     /standard_function_body {
         % get data out of fake closure dictionary
         safe_func_dict_dict exch get /func_local_dict arg
-        func_local_dict begin
+        % start actual local dictionary, copy func_local_dict into it
+        10 dict begin
+        func_local_dict {
+            def
+        } forall
+        /func_local_dict currentdict def
 
         % set a sentinel, roll above args
-        /sentinel (sentinel          ) def
-        sentinel 8 10 getinterval rand exch cvs pop
+        /function_name_s function_name 20 string cvs def
+        /f_name_len function_name_s length def
+        /sentinel 9 f_name_len add 10 add string def
+        sentinel 0 (sentinel:) putinterval
+        sentinel 9 function_name_s putinterval
+        0 1 9 {
+            9 add f_name_len add sentinel exch 32 put
+        } for
+        sentinel 9 f_name_len add 10 getinterval rand exch cvs pop
         /sentinel sentinel cvn def
         sentinel arguments length 1 add 1 roll
+        [countdictstack (>>> start) sentinel] debug
         % enter dictionary
         function_dictionary /new eq {
             /function_dictionary 10 dict def
@@ -70,14 +94,6 @@
         func_local_dict /local_function_body get cvx exec
         % roll for returns
         returns 1 add -1 roll
-        % check sentinel
-        dup sentinel eq {
-            pop
-        } {
-            pstack
-            [(sentinel not in place for) function_name] ==
-            die
-        } ifelse
         function_dictionary false ne {
             % check dictionary
             currentdict function_dictionary ne {
@@ -88,6 +104,17 @@
             % leave dictionary
             end
         } if
+        % check sentinel
+        dup sentinel eq {
+            [countdictstack (<<< complete) sentinel] debug
+            pop
+        } {
+            1 0 0 setrgbcolor
+            doot
+            pstack
+            [countdictstack sentinel (not in place for) function_name] ==
+            die
+        } ifelse
         currentdict func_local_dict ne {
             countdictstack ==
             (where is closure dictionary?!) ==
@@ -99,7 +126,6 @@
     func_local_dict /new_function_body [
         function_name /standard_function_body cvx
     ] put
-    func_local_dict /new_function_body get 0 function_name put
     func_local_dict /new_function_body get cvx function_name arg
 } def
 
