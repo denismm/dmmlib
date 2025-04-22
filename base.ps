@@ -2,8 +2,8 @@
 
 /arg { exch def } def
 
-/debug {pop} def
-% /debug {==} def
+/sfd_debug { pop } def
+% /sfd_debug { == } def
 % define if not known
 /defaultdef {
     % name definition
@@ -78,7 +78,7 @@
         sentinel 9 f_name_len add 10 getinterval rand exch cvs pop
         /sentinel sentinel cvn def
         sentinel arguments length 1 add 1 roll
-        [countdictstack (>>> start) sentinel] debug
+        [countdictstack (>>> start) sentinel] sfd_debug
         % enter dictionary
         function_dictionary /new eq {
             /function_dictionary 10 dict def
@@ -106,7 +106,7 @@
         } if
         % check sentinel
         dup sentinel eq {
-            [countdictstack (<<< complete) sentinel] debug
+            [countdictstack (<<< complete) sentinel] sfd_debug
             pop
         } {
             1 0 0 setrgbcolor
