@@ -39,6 +39,10 @@ These are math functions that I use often enough to not want to constantly rewri
 
 *num* **half** *num*
 
+*int int* **gcd** *int*
+
+> This is Euclid's gcd algorithm.
+
 *num num* **mymod** *remainder*
 
 > This is a non-integer-requiring mod that always returns a positive number.

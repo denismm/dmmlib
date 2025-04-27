@@ -144,6 +144,26 @@
 
 /PI 3.1415926 def
 
+/gcd_dict 3 dict def
+/gcd {
+    gcd_dict begin
+        /b arg /a arg
+        {
+            b a gt {
+                /b a /a b def def
+            } {
+                /r a b mod def
+                r 0 eq {
+                    exit
+                } {
+                    /a b /b r def def
+                } ifelse
+            } ifelse
+        } loop
+        b
+    end
+}  def
+
 % mod that accepts floats and makes negatives positive
 /mod_dict 2 dict def
 /mymod {
