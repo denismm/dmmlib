@@ -208,7 +208,11 @@ end
         % whitefill newpath
 
         % rotation per character is full_angle * (charwidth / width)
-        /rot_per_unit full_angle width div def
+        /rot_per_unit width 0 gt {
+            full_angle width div 
+        } {
+            0
+        } ifelse def
         /minibuf ( ) def
         text_to_show {
             /char_to_show arg
