@@ -261,9 +261,9 @@ These are math functions that I use often enough to not want to constantly rewri
 
 > puts *name* and the value of the variable pointed to by it in a list, then prints that list to the log with == .
 
-Code: `/foobar debug_var`
+> Code: `/foobar debug_var`
 
-Output: `[/foobar 97.001]`
+> Output: `[/foobar 97.001]`
 
 ## lines.ps
 A library for drawing lines differently.  More information can be found at
