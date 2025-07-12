@@ -456,6 +456,18 @@ Text manipulation and display functions.
 > negative radius is provided the text will curve inward and be centered
 > on the 270-degree axis.
 
+*string lineheight radius* **circular_balloon_show** *mismatch*
+
+> **Show** the string linewrapped within a circle, centered at the origin,
+> and return how many characters didn't fit as a positive number or how many
+> lines were not used as a negative number.  For best results call X_center
+> before calling this.  Long lines will be compressed if needed.
+
+*string lineheight* **find_circular_balloon_radius** *radius*
+
+> Return a radius so that if called with circular_balloon_show, this text
+> will fit entirely in the balloon and use all the lines.
+
 *basefont encoding newfont* **change_encoding** *-*
 
 > Define a new version of *basefont* with the given encoding.

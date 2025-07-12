@@ -112,7 +112,6 @@ end
     % show paragraph, wrapping lines and compressing long words
     % return number of lines used
     layout_dict begin
-        /compress true def
         /show_func arg
         /lineheight arg
         /linewidth arg
@@ -234,6 +233,126 @@ end
         die
     } ifelse
 } def
+
+/circular_balloon_show_base {
+    layout_dict begin
+        /draw arg /radius arg /text_height arg /paragraph arg
+        draw {
+            /internal_show {
+                gsave
+                    0 line_pos translate
+                    line_buffer line_width {center_base_show} width_line_show
+                grestore
+            } def
+        } {
+            /internal_show { } def
+        } ifelse
+        /lines radius 2 mul text_height div cvi def
+
+        /topline lines half 0.5 sub def
+        /lastline topline neg def
+        /line_i topline def
+        % trim invisible characters off the back of paragraph
+        /text_len paragraph length def
+        {
+            paragraph text_len 1 sub get dup 32 eq exch 10 eq or {
+                /text_len -1 adddef
+            } {
+                exit
+            } ifelse
+        } loop
+        /paragraph paragraph 0 text_len getinterval def
+        {
+            paragraph (\n) search {
+                /subparagraph arg pop /paragraph arg
+            } {
+                /subparagraph arg /paragraph () def
+            } ifelse
+            /line_buffer () def
+            {
+                /line_pos line_i text_height mul def
+                /line_half_width radius dup mul line_pos dup mul sub sqrt def
+                /line_width line_half_width 2 mul def
+                subparagraph ( ) search {
+                    /new_word arg pop /subparagraph arg
+                } {
+                    /new_word arg /subparagraph () def
+                } ifelse
+                line_buffer length 0 gt {
+                    line_buffer ( ) concatenate
+                } {
+                    line_buffer
+                } ifelse
+                new_word concatenate
+                dup stringwidth pop line_width gt {
+                    pop
+                    line_buffer length 0 gt {
+                        internal_show
+                        /line_i -1 adddef
+                    } if
+                    /line_buffer new_word def
+                } {
+                    /line_buffer exch def
+                    subparagraph length 0 eq {
+                        internal_show
+                        /line_i -1 adddef
+                        exit
+                    } if
+                } ifelse
+                line_i lastline lt { exit } if
+            } loop
+            line_i lastline lt { exit } if
+            paragraph length 0 eq { exit } if
+        } loop
+        % if we filled circle, line_i should be one less than lastline
+        % if we didn't finish text, there will be leftover in subparagraph and/or paragraph
+        lastline line_i sub 1 sub
+        dup 0 ge {
+            pop subparagraph length paragraph length add
+        } if
+    end
+} def
+
+/circular_balloon_show { true circular_balloon_show_base } def
+
+/find_circular_balloon_radius {
+    layout_dict begin
+        /text_height arg /test_paragraph arg
+        /loops 0 def
+        /a_rad test_paragraph stringwidth pop text_height mul PI div sqrt def
+        /radius_test { /test_radius arg
+            test_paragraph text_height test_radius false circular_balloon_show_base
+        } def
+        /rad_step text_height def
+        {
+            /a_val a_rad radius_test def
+            a_val 0 eq {
+                exit
+            } if
+            /a_sign a_val dup abs div def
+            /b_rad a_rad rad_step a_sign mul add def
+            /b_val b_rad radius_test def
+            b_val 0 eq {
+                /a_rad b_rad def
+                exit
+            } if
+            /b_sign b_val dup abs div def
+            b_sign a_sign eq {
+                /a_rad b_rad def
+            } {
+                /a_rad a_rad b_rad add half def
+                /rad_step rad_step half def
+            } ifelse
+            /loops 1 adddef
+            loops 100 gt rad_step currentlinewidth lt or {
+                /a_rad a_rad b_rad max def
+                exit
+            } if
+        } loop
+        a_rad
+    end
+} def
+
 
 /change_encoding_dict 5 dict def
 % args:
