@@ -262,6 +262,8 @@ end
             } ifelse
         } loop
         /paragraph paragraph 0 text_len getinterval def
+        /subparagraph () def
+        /line_buffer () def
         {
             paragraph (\n) search {
                 /subparagraph arg pop /paragraph arg
@@ -308,7 +310,7 @@ end
         % if we didn't finish text, there will be leftover in subparagraph and/or paragraph
         lastline line_i sub 1 sub
         dup 0 ge {
-            pop subparagraph length paragraph length add
+            pop subparagraph length paragraph length add line_buffer length add
         } if
     end
 } def
