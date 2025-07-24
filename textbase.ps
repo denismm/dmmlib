@@ -323,16 +323,25 @@ end
         /text_height arg /test_paragraph arg
         /loops 0 def
         /a_rad test_paragraph stringwidth pop text_height mul PI div sqrt def
+        /a_rad a_rad text_height half maximum def
+
+        % radius_test checks how well text will fit in a balloon of radius test_radius
         /radius_test { /test_radius arg
             test_paragraph text_height test_radius false circular_balloon_show_base
         } def
+
         /rad_step text_height def
         {
+            % test radius a vs radius a + step
             /a_val a_rad radius_test def
             a_val 0 eq {
                 exit
             } if
             /a_sign a_val dup abs div def
+            % don't try any diameters less than text_height
+            a_rad text_height half eq a_sign 0 lt and {
+                exit
+            } if
             /b_rad a_rad rad_step a_sign mul add def
             /b_val b_rad radius_test def
             b_val 0 eq {
